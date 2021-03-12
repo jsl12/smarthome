@@ -1,0 +1,61 @@
+version: '3.7'
+services:
+  homeassistant:
+    container_name: homeassistant
+    image: homeassistant/raspberrypi3-homeassistant:stable
+    hostname: homeassistant
+    network_mode: "host"
+    volumes:
+      - /opt/homeassistant:/config
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/letsencrypt:/etc/letsencrypt:ro
+    devices:
+      - /dev/ttyACM0:/dev/ttyACM0:rwm
+    restart: always
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://127.0.0.1:8123"]
+      interval: 30s
+      timeout: 10s
+      retries: 6
+
+  deconz:
+    container_name: deconz
+    image: marthoc/deconz:stable
+    network_mode: host
+    hostname: deconz
+    volumes:
+      - /var/data/ha/deconz:/root/.local/share/dresden-elektronik/deCONZ
+      - /etc/localtime:/etc/localtime:ro
+    devices:
+      - /dev/ttyACM0:/dev/ttyACM0:rwm
+    restart: always
+    environment:
+      - DECONZ_VNC_MODE=1
+      - DECONZ_VNC_PORT=5901
+      - DECONZ_VNC_PASSWORD=changeme
+      - DECONZ_DEVICE=/dev/ttyACM0
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://127.0.0.1:80" ]
+      interval: 30s
+      timeout: 10s
+      retries: 6
+
+  appdaemon:
+    container_name: appdaemon
+    image: appdaemon:latest
+    build: https://github.com/AppDaemon/appdaemon.git
+    network_mode: host
+    hostname: appdaemon
+#    build: ./appdaemon
+    restart: always
+    depends_on:
+      - homeassistant
+    environment:
+      - HA_URL="192.168.1.245:8123"
+      - TOKEN="NONE"
+      - DASH_URL="http://$HOSTNAME:5050"
+      - TZ=America/Chicago
+      - DEBIAN_FRONTEND=noninteractive
+    volumes:
+      - /opt/appdaemon:/conf
+      - /etc/localtime:/etc/localtime:ro
