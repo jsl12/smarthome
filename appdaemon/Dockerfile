@@ -28,4 +28,4 @@ COPY appdaemon.yaml /conf/
 COPY dockerStart.sh /usr/src/app/
 
 RUN chmod +x /usr/src/app/dockerStart.sh
-ENTRYPOINT ["./dockerStart.sh"]
+ENTRYPOINT ["/usr/src/app/dockerStart.sh"]
