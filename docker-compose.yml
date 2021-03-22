@@ -50,7 +50,7 @@ services:
     depends_on:
       - homeassistant
     volumes:
-      - /opt/appdaemon:/conf
+      - /mnt/smarthome/appdaemon:/conf
       - /etc/localtime:/etc/localtime:ro
     tty: true
     stdin_open: true

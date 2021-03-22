@@ -9,12 +9,12 @@ FROM python:latest
 
 # API Port
 EXPOSE 5050
-EXPOSE 80
-EXPOSE 443
+# EXPOSE 80
+# EXPOSE 443
 
 # Mountpoints for configuration & certificates
-VOLUME /conf
-VOLUME /certs
+# VOLUME /conf
+# VOLUME /certs
 
 # # Copy appdaemon into image
 # WORKDIR /usr/src/app
@@ -24,9 +24,7 @@ ENV CRYPTOGRAPHY_DONT_BUILD_RUST=1
 
 RUN pip install appdaemon
 
-RUN chmod +rw /conf/
-COPY appdaemon.yaml /conf/
 COPY dockerStart.sh /usr/src/app/
 
 RUN chmod +x /usr/src/app/dockerStart.sh
-# ENTRYPOINT ["/usr/src/app/dockerStart.sh"]
+ENTRYPOINT ["/usr/src/app/dockerStart.sh"]
