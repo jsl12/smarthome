@@ -24,6 +24,7 @@ ENV CRYPTOGRAPHY_DONT_BUILD_RUST=1
 
 RUN pip install appdaemon
 
+RUN chmod +rw /conf/
 COPY appdaemon.yaml /conf/
 COPY dockerStart.sh /usr/src/app/
 
