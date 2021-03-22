@@ -16,13 +16,15 @@ EXPOSE 443
 VOLUME /conf
 VOLUME /certs
 
-# Copy appdaemon into image
-WORKDIR /usr/src/app
-COPY . .
+# # Copy appdaemon into image
+# WORKDIR /usr/src/app
+# COPY . .
 
 ENV CRYPTOGRAPHY_DONT_BUILD_RUST=1
 
 RUN pip install appdaemon
+
+COPY ./appdaemon.yaml /conf/
 
 RUN chmod +x /usr/src/app/dockerStart.sh
 ENTRYPOINT ["./dockerStart.sh"]

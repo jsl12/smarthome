@@ -1,13 +1,13 @@
 appdaemon:
-  latitude: 0
-  longitude: 0
-  elevation: 30
-  time_zone: Europe/Berlin
+  latitude: 30.250968
+  longitude: -97.748193
+  elevation: 150
+  time_zone: America/Chicago
   plugins:
     HASS:
       type: hass
       ha_url: "192.168.1.245:8123"
-      token:
+      token: !secret long_lived_token
 http:
   url:
 admin:
