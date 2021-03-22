@@ -43,19 +43,12 @@ services:
   appdaemon:
     container_name: appdaemon
     image: appdaemon:latest
-    build: https://github.com/AppDaemon/appdaemon.git
+    build: ./appdaemon
     network_mode: host
     hostname: appdaemon
-#    build: ./appdaemon
     restart: always
     depends_on:
       - homeassistant
-    environment:
-      - HA_URL="192.168.1.245:8123"
-      - TOKEN="NONE"
-      - DASH_URL="http://$HOSTNAME:5050"
-      - TZ=America/Chicago
-      - DEBIAN_FRONTEND=noninteractive
     volumes:
       - /opt/appdaemon:/conf
       - /etc/localtime:/etc/localtime:ro
