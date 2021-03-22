@@ -20,6 +20,8 @@ VOLUME /certs
 WORKDIR /usr/src/app
 COPY . .
 
+ENV CRYPTOGRAPHY_DONT_BUILD_RUST=1
+
 RUN pip install appdaemon
 
 RUN chmod +x /usr/src/app/dockerStart.sh
