@@ -6,10 +6,10 @@ appdaemon:
   plugins:
     HASS:
       type: hass
-      ha_url: "192.168.1.245:8123"
+      ha_url: http://127.0.0.1:8123
       token: !secret long_lived_token
 http:
-  url:
+  url: http://127.0.0.1:5050
 admin:
 api:
 hadashboard:

@@ -52,5 +52,6 @@ services:
     volumes:
       - /mnt/smarthome/appdaemon:/conf
       - /etc/localtime:/etc/localtime:ro
+    command: appdaemon -c /conf/
     tty: true
     stdin_open: true
