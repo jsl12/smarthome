@@ -52,3 +52,5 @@ services:
     volumes:
       - /opt/appdaemon:/conf
       - /etc/localtime:/etc/localtime:ro
+    tty: true
+    stdin_open: true
