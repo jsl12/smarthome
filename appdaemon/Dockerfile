@@ -20,5 +20,7 @@ VOLUME /certs
 WORKDIR /usr/src/app
 COPY . .
 
+RUN pip install appdaemon
+
 RUN chmod +x /usr/src/app/dockerStart.sh
 ENTRYPOINT ["./dockerStart.sh"]
