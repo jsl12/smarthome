@@ -13,3 +13,5 @@ scene: !include scenes.yaml
 
 recorder:
   db_url: 'sqlite:///:memory:'
+  auto_purge: True
+  purge_keep_days: 5
