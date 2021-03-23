@@ -27,7 +27,7 @@ services:
     volumes:
       - /etc/localtime:/etc/localtime:ro
       - /etc/timezone:/etc/timezone:ro
-      - /mnt/smarthome/deconz:/root/.local/share/dresden-elektronik/deCONZ
+      - /mnt/dietpi_userdata/deconz:/root/.local/share/dresden-elektronik/deCONZ
     devices:
       - /dev/ttyACM0:/dev/ttyACM0:rwm
     restart: unless-stopped
