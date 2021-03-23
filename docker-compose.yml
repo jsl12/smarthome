@@ -4,14 +4,15 @@ services:
     container_name: homeassistant
     image: homeassistant/raspberrypi3-homeassistant:stable
     hostname: homeassistant
-    network_mode: "host"
+    network_mode: host
     volumes:
-      - /opt/homeassistant:/config
       - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
+      - /mnt/smarthome/homeassistant:/config
       - /etc/letsencrypt:/etc/letsencrypt:ro
     devices:
       - /dev/ttyACM0:/dev/ttyACM0:rwm
-    restart: always
+    restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://127.0.0.1:8123"]
       interval: 30s
@@ -20,38 +21,38 @@ services:
 
   deconz:
     container_name: deconz
-    image: marthoc/deconz:stable
+    image: marthoc/deconz
     network_mode: host
     hostname: deconz
     volumes:
-      - /var/data/ha/deconz:/root/.local/share/dresden-elektronik/deCONZ
       - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
+      - /mnt/smarthome/deconz:/root/.local/share/dresden-elektronik/deCONZ
     devices:
       - /dev/ttyACM0:/dev/ttyACM0:rwm
-    restart: always
+    restart: unless-stopped
     environment:
-      - DECONZ_VNC_MODE=1
-      - DECONZ_VNC_PORT=5901
-      - DECONZ_VNC_PASSWORD=changeme
       - DECONZ_DEVICE=/dev/ttyACM0
-    healthcheck:
-      test: [ "CMD", "curl", "-f", "http://127.0.0.1:80" ]
-      interval: 30s
-      timeout: 10s
-      retries: 6
+      - DECONZ_WEB_PORT=8080
+      - DECONZ_WS_PORT=8088
+      - DECONZ_VNC_MODE=0
+#      - DECONZ_VNC_MODE=1
+#      - DECONZ_VNC_PORT=5901
+#      - DECONZ_VNC_PASSWORD=changeme
 
   appdaemon:
     container_name: appdaemon
-    image: appdaemon:latest
+    image: appdaemon:custom
     build: ./appdaemon
     network_mode: host
     hostname: appdaemon
-    restart: always
+    restart: unless-stopped
     depends_on:
       - homeassistant
     volumes:
-      - /mnt/smarthome/appdaemon:/conf
       - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
+      - /mnt/smarthome/appdaemon:/conf
     command: appdaemon -c /conf/
     tty: true
     stdin_open: true
