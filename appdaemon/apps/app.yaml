@@ -6,6 +6,14 @@ dutch_grow_light:
   duration: '14:00:00'
   end: 'sunset + 00:30:00'
 
+grow_cabinet:
+  module: light_control
+  class: GrowLight
+  entity_id: switch.grow_cabinet
+  start: '09:00:00'
+  duration: '12:00:00'
+  end: '22:00:00'
+
 living_room_fade:
   module: light_control
   class: TimeFader
