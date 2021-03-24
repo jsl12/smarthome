@@ -40,7 +40,7 @@
   entities:
     light.bedside_lamp:
       state: 'on'
-      brightness_pct: 20
+      brightness_pct: 10
       color_name: red
     light.living_room:
       state: 'off'
