@@ -72,6 +72,8 @@ views:
           type: entities
           title: Media
 
-      - type: entity
-        entity: sensor.ha_uptime
-
+      - type: entities
+        entities:
+          - entity: scene.wind_down
+          - entity: scene.elena_bed
+          - entity: scene.john_bed
