@@ -17,3 +17,21 @@ recorder:
   db_url: 'sqlite:///:memory:'
   auto_purge: True
   purge_keep_days: 5
+
+cloud:
+  google_actions:
+    filter:
+      include_domains:
+        - switch
+        - light
+      exclude_entities:
+        - light.office_overhead_1
+        - light.office_overhead_2
+        - light.office_overhead_3
+    entity_config:
+      light.living_room:
+        name: Living Room Pair
+        aliases:
+          - living room pair
+          - main lights
+        room: living room
