@@ -1,6 +1,8 @@
-
 # Configure a default setup of Home Assistant (frontend, api, etc)
 default_config:
+
+lovelace:
+  mode: yaml
 
 # Text to speech
 tts:
