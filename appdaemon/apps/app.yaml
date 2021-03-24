@@ -17,8 +17,9 @@ grow_cabinet:
 morning_bedroom:
   module: light_control
   class: TimeFader
-  entity_id: light.living_room_lights
+  entity_id: light.bedside_lamp
   start: 'sunrise - 00:30:00'
+  force_on: true
   end: '09:00:00'
   initial:
     brightness: 5
@@ -30,8 +31,9 @@ morning_bedroom:
 living_room_morning:
   module: light_control
   class: TimeFader
-  entity_id: light.living_room_lights
+  entity_id: light.living_room
   start: 'sunrise - 1:00:00'
+  force_on: true
   end: '11:00:00'
   initial:
     brightness: 5
@@ -43,7 +45,7 @@ living_room_morning:
 living_room_evening:
   module: light_control
   class: TimeFader
-  entity_id: light.living_room_lights
+  entity_id: light.living_room
   start: '16:00:00'
   end: 'sunset + 02:00:00'
   initial:
