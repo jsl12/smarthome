@@ -13,6 +13,12 @@ automation: !include automations.yaml
 script: !include scripts.yaml
 scene: !include scenes.yaml
 
+logger:
+  default: warning
+  logs:
+    homeassistant.loader: info
+    homeassistant.components.light.reproduce_state: error
+
 recorder:
   db_url: 'sqlite:///:memory:'
   auto_purge: True
