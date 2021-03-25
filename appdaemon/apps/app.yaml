@@ -15,7 +15,7 @@ grow_cabinet:
   end: '22:00:00'
 
 morning_bedroom:
-  module: light_control
+  module: fader
   class: TimeFader
   entity_id: light.bedside_lamp
   start: 'sunrise - 00:30:00'
@@ -29,7 +29,7 @@ morning_bedroom:
     color_temp: 250
 
 living_room_morning:
-  module: light_control
+  module: fader
   class: TimeFader
   entity_id: light.living_room
   start: 'sunrise - 1:00:00'
@@ -43,7 +43,7 @@ living_room_morning:
     color_temp: 300
 
 living_room_evening:
-  module: light_control
+  module: fader
   class: TimeFader
   entity_id: light.living_room
   start: '16:00:00'
