@@ -53,6 +53,7 @@ services:
       - /etc/localtime:/etc/localtime:ro
       - /etc/timezone:/etc/timezone:ro
       - /mnt/smarthome/appdaemon:/conf
+      - /mnt/smarthome/homeassistant:/usr/homeassistant
     command: appdaemon -c /conf/
     tty: true
     stdin_open: true
