@@ -129,8 +129,8 @@ class TimeFader(hass.Hass):
 class SceneFader(hass.Hass):
     """
     Arguments
-        start
-        end
+        start:
+        end:
         initial:
         final:
 
@@ -143,13 +143,16 @@ class SceneFader(hass.Hass):
             f'{self.end_datetime.strftime("%I:%M%p").lower()}'
         )
 
+        # this will actually fire self.start_fade
         self.daily_timer = self.run_daily(callback=self.start_fade,
                                           start=self.args['start'])
 
+        # self.log(str(self.start_datetime)[:19])
+
         self.ha_config = Path(self.args.get('ha_config', f'/usr/homeassistant/scenes.yaml'))
 
-        if self.active:
-            self.start_fade()
+        # if self.active:
+        #     self.start_fade()
 
     def datetime_arg(self, arg_name: str):
         return datetime.combine(self.date(), self.parse_time(self.args[arg_name])).astimezone()
@@ -171,20 +174,41 @@ class SceneFader(hass.Hass):
         return self.end_datetime >= self.current_datetime >= self.start_datetime
 
     @property
-    def next_run_time(self) -> time:
-        return self.profile.index[self.current_datetime <= self.profile.index][0].to_pydatetime().time()
+    def entities(self):
+        return self.profile.columns.levels[0].values
+
+    def entity_profile(self, entity) -> pd.DataFrame:
+        return self.profile.loc[:, pd.IndexSlice[entity, :]].dropna(how='all').drop_duplicates()
+
+    @property
+    def prev_step(self):
+        return self.profile.iloc[self.i - 1]
+
+    @property
+    def this_step(self):
+        return self.profile.iloc[self.i]
+
+    @property
+    def this_step_time(self, ) -> str:
+        return self.this_step.name.to_pydatetime().time().isoformat()[:8]
 
     def cancel_adjust(self):
         try:
             self.cancel_timer(self.adjust_timer)
         except:
             pass
+        else:
+            del self.adjust_timer
 
     def start_next(self):
-        self.cancel_adjust()
-        next_time = self.next_run_time.isoformat()[:8]
-        self.log(f'Setting up next run at {next_time}')
-        self.adjust_timer = self.run_at(callback=self.adjust, start=next_time)
+        self.i += 1
+        try:
+            next_time = self.this_step_time
+        except IndexError:
+            self.log(f'No next adjust time, last at {self.profile.index[-1].time().isoformat()[:8]}')
+        else:
+            self.log(f'Setting up next run at {next_time}')
+            self.adjust_timer = self.run_at(callback=self.adjust, start=next_time, pin_thread=4)
 
     def start_fade(self, kwargs=None):
         self.log(f'Starting Scene fade, calculating profile')
@@ -193,11 +217,27 @@ class SceneFader(hass.Hass):
                                            final=self.args['final'],
                                            start=self.start_datetime,
                                            end=self.end_datetime)
-        self.log(f'Index from {self.profile.index[0].time().isoformat()[:8]} to {self.profile.index[-1].time().isoformat()[:8]}')
+
+        if self.args.get('force_initial', False):
+            self.log('Forcing the initial state')
+            for ent, state in self.profile.iloc[0].loc[pd.IndexSlice[:, 'state']].iteritems():
+                if not pd.isna(state):
+                    self.log(f'{ent:20} {state}')
+                if state == 'on':
+                    self.turn_on(ent)
+                elif state == 'off':
+                    self.turn_off(ent)
+
+        self.i = self.profile.index.get_loc(self.profile.index[self.current_datetime >= self.profile.index][-1])
+        self.log(
+            f'Index from {self.profile.index[0].time().isoformat()[:8]} to '
+            f'{self.profile.index[-1].time().isoformat()[:8]}, '
+            f'step {self.i+1}/{self.profile.shape[0]}'
+        )
         self.adjust()
-        self.start_next()
 
     def adjust(self, kwargs=None):
+        self.log(f'Adjusting step {self.i+1} at {self.profile.index[self.i].time().isoformat()[:8]}')
         for ent, s in self.profile[self.profile.index <= self.current_datetime].groupby(level=0, axis=1):
             s.columns = s.columns.droplevel(0)
             s = s.iloc[-1].to_dict()
@@ -207,15 +247,14 @@ class SceneFader(hass.Hass):
                     self.log(f'{ent:20} {s}')
                     self.turn_on(entity_id=ent, **s)
                 elif scene_state == 'off':
-                    self.log(f'{ent:20} off')
+                    self.log(f'{ent:20} turned off')
                     self.turn_off(entity_id=ent)
             else:
-                self.log(f'Skipping {ent:20} - off')
+                self.log(f'{ent:20} skipped, already off')
 
         if self.active:
+            self.log(f'Starting next adjustment')
             self.start_next()
-        else:
-            self.cancel_adjust()
 
     def terminate(self):
         self.cancel_adjust()
@@ -252,12 +291,10 @@ def create_profile(initial, final, start: datetime, end: datetime) -> pd.DataFra
         for a, val in attrs.items():
             df.iloc[-1].loc[e, a] = val
 
-    cols = df.iloc[[0, -1]].loc[:, pd.IndexSlice[:, 'state']].dropna(how='all', axis=1).columns
-    ffill_cols = df.loc[:, cols].loc[:, ~pd.isna(df.loc[:, cols].iloc[0])].columns
-    # bfill_cols = df.loc[:, cols].loc[:, pd.isna(df.loc[:, cols].iloc[0])].columns
-
+    states = df.loc[:, pd.IndexSlice[:, 'state']]
+    initially_on = states.iloc[0] == 'on'
+    ffill_cols = states.loc[:, initially_on].columns
     df.loc[:, ffill_cols] = df.loc[:, ffill_cols].fillna(method='ffill')
-    #     df.loc[:, bfill_cols] = df.loc[:, bfill_cols].fillna(method='bfill')
 
     fill_numeric(df, 'brightness_pct')
     fill_numeric(df, 'color_temp')
