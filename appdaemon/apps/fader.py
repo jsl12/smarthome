@@ -219,14 +219,14 @@ class SceneFader(hass.Hass):
                                            end=self.end_datetime)
 
         if self.args.get('force_initial', False):
-            self.log('Forcing the initial on/off state')
-            for ent, state in self.profile.iloc[0].loc[pd.IndexSlice[:, 'state']].iteritems():
-                if not pd.isna(state):
-                    self.log(f'{ent:20} {state}')
-                if state == 'on':
-                    self.turn_on(ent)
-                elif state == 'off':
-                    self.turn_off(ent)
+            self.log('Forcing the initial on/off initial_state')
+            for entity, initial_state in self.profile.iloc[0].loc[pd.IndexSlice[:, 'initial_state']].iteritems():
+                if not pd.isna(initial_state):
+                    self.log(f'{entity:20} {initial_state}')
+                if initial_state == 'on':
+                    self.turn_on(entity)
+                elif initial_state == 'off':
+                    self.turn_off(entity)
 
         self.i = self.profile.index.get_loc(self.profile.index[self.current_datetime >= self.profile.index][-1])
         self.log(
@@ -238,17 +238,17 @@ class SceneFader(hass.Hass):
 
     def adjust(self, kwargs=None):
         self.log(f'Adjusting step {self.i+1} at {self.profile.index[self.i].time().isoformat()[:8]}')
-        for ent, profile_state in self.profile.iloc[self.i].dropna().loc[pd.IndexSlice[:, 'state']].iteritems():
-            if self.get_state(ent) == 'on':
+        for entity, profile_state in self.profile.iloc[self.i].dropna().loc[pd.IndexSlice[:, 'state']].iteritems():
+            if self.get_state(entity) == 'on':
                 if profile_state == 'on':
-                    kwargs = self.profile.iloc[self.i].loc[ent].drop('state').to_dict()
-                    self.log(f'{ent:20} {profile_state} {kwargs}')
-                    self.turn_on(entity_id=ent, **kwargs)
+                    kwargs = self.profile.iloc[self.i].loc[entity].drop('state').to_dict()
+                    self.log(f'{entity:20} {profile_state} {kwargs}')
+                    self.turn_on(entity_id=entity, **kwargs)
                 elif profile_state == 'off':
-                    self.log(f'{ent:20} turned off')
-                    self.turn_off(entity_id=ent)
+                    self.log(f'{entity:20} turned off')
+                    self.turn_off(entity_id=entity)
             else:
-                self.log(f'{ent:20} skipped, already off')
+                self.log(f'{entity:20} skipped, already off')
 
         if self.active:
             self.log(f'Starting next adjustment')
