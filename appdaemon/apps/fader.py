@@ -211,7 +211,8 @@ class SceneFader(hass.Hass):
                 elif initial_state == 'off':
                     self.turn_off(entity)
 
-        self.i = self.profile.index.get_loc(self.profile.index[self.current_datetime >= self.profile.index][-1])
+        self.i = s - 1 if (s := (self.profile.index <= self.current_datetime).sum()) > 0 else 0
+
         self.log(
             f'Index from {self.profile.index[0].time().isoformat()[:8]} to '
             f'{self.profile.index[-1].time().isoformat()[:8]}, '

@@ -14,47 +14,6 @@ grow_cabinet:
   duration: '12:00:00'
   end: '22:00:00'
 
-morning_bedroom:
-  module: fader
-  class: TimeFader
-  entity_id: light.bedside_lamp
-  start: 'sunrise - 00:30:00'
-  force_on: true
-  end: '09:00:00'
-  initial:
-    brightness_pct: 5
-    color_temp: 650
-  final:
-    brightness_pct: 40
-    color_temp: 250
-
-#living_room_morning:
-#  module: fader
-#  class: TimeFader
-#  entity_id: light.living_room
-#  start: 'sunrise - 1:00:00'
-#  force_on: true
-#  end: '11:00:00'
-#  initial:
-#    brightness_pct: 5
-#    color_temp: 200
-#  final:
-#    brightness_pct: 80
-#    color_temp: 300
-
-#living_room_evening:
-#  module: fader
-#  class: TimeFader
-#  entity_id: light.living_room
-#  start: 'sunset - 04:00:00'
-#  end: 'sunset + 02:00:00'
-#  initial:
-#    brightness_pct: 80
-#    color_temp: 350
-#  final:
-#    brightness_pct: 50
-#    color_temp: 450
-
 morning_fader_1:
   module: fader
   class: SceneFader
@@ -84,3 +43,18 @@ morning_fader_2:
     - wed
     - thu
     - fri
+
+wind_down_fader:
+  module: fader
+  class: SceneFader
+  start: 'sunset'
+  end: '22:00:00'
+  force_initial: True
+  initial: Wind Down
+  final: Elena Bed
+  weekday:
+    - sun
+    - mon
+    - tue
+    - wed
+    - thu
