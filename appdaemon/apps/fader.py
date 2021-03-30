@@ -133,6 +133,7 @@ class SceneFader(hass.Hass):
         end:
         initial:
         final:
+        weekday:
 
     """
     def initialize(self):
@@ -187,15 +188,12 @@ class SceneFader(hass.Hass):
     def this_step_time(self, ) -> str:
         return self.this_step.name.to_pydatetime().time().isoformat()[:8]
 
-    def cancel_adjust(self):
-        try:
-            self.cancel_timer(self.adjust_timer)
-        except:
-            pass
-        else:
-            del self.adjust_timer
-
     def start_fade(self, kwargs=None):
+        if (days := self.args.get('weekday', False)):
+            if (day := self.current_datetime.date().strftime('%a').lower()) not in days:
+                self.log(f'Not valid for {day}')
+                return
+
         self.log(f'Starting Scene fade, calculating profile')
         self.profile = profile_from_scenes(scene_path=self.ha_config,
                                            initial=self.args['initial'],
@@ -247,6 +245,14 @@ class SceneFader(hass.Hass):
         else:
             self.log(f'Next adjustment at {next_time}')
             self.adjust_timer = self.run_at(callback=self.adjust, start=next_time, pin_thread=4)
+
+    def cancel_adjust(self):
+        try:
+            self.cancel_timer(self.adjust_timer)
+        except:
+            pass
+        else:
+            del self.adjust_timer
 
     def terminate(self):
         self.cancel_adjust()
