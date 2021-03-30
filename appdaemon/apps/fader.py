@@ -147,12 +147,7 @@ class SceneFader(hass.Hass):
         self.daily_timer = self.run_daily(callback=self.start_fade,
                                           start=self.args['start'])
 
-        # self.log(str(self.start_datetime)[:19])
-
         self.ha_config = Path(self.args.get('ha_config', f'/usr/homeassistant/scenes.yaml'))
-
-        # if self.active:
-        #     self.start_fade()
 
     def datetime_arg(self, arg_name: str):
         return datetime.combine(self.date(), self.parse_time(self.args[arg_name])).astimezone()
@@ -200,16 +195,6 @@ class SceneFader(hass.Hass):
         else:
             del self.adjust_timer
 
-    def start_next(self):
-        self.i += 1
-        try:
-            next_time = self.this_step_time
-        except IndexError:
-            self.log(f'No next adjust time, last at {self.profile.index[-1].time().isoformat()[:8]}')
-        else:
-            self.log(f'Next adjustment at {next_time}')
-            self.adjust_timer = self.run_at(callback=self.adjust, start=next_time, pin_thread=4)
-
     def start_fade(self, kwargs=None):
         self.log(f'Starting Scene fade, calculating profile')
         self.profile = profile_from_scenes(scene_path=self.ha_config,
@@ -252,6 +237,16 @@ class SceneFader(hass.Hass):
 
         if self.active:
             self.start_next()
+
+    def start_next(self):
+        self.i += 1
+        try:
+            next_time = self.this_step_time
+        except IndexError:
+            self.log(f'No next adjust time, last at {self.profile.index[-1].time().isoformat()[:8]}')
+        else:
+            self.log(f'Next adjustment at {next_time}')
+            self.adjust_timer = self.run_at(callback=self.adjust, start=next_time, pin_thread=4)
 
     def terminate(self):
         self.cancel_adjust()
