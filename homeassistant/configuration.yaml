@@ -4,6 +4,9 @@ default_config:
 lovelace:
   mode: yaml
 
+# enable REST API
+api:
+
 # Text to speech
 tts:
   - platform: google_translate
