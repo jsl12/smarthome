@@ -207,7 +207,7 @@ class SceneFader(hass.Hass):
         except IndexError:
             self.log(f'No next adjust time, last at {self.profile.index[-1].time().isoformat()[:8]}')
         else:
-            self.log(f'Setting up next run at {next_time}')
+            self.log(f'Next adjustment at {next_time}')
             self.adjust_timer = self.run_at(callback=self.adjust, start=next_time, pin_thread=4)
 
     def start_fade(self, kwargs=None):
@@ -251,7 +251,6 @@ class SceneFader(hass.Hass):
                 self.log(f'{entity:20} skipped, already off')
 
         if self.active:
-            self.log(f'Starting next adjustment')
             self.start_next()
 
     def terminate(self):

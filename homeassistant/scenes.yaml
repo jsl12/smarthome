@@ -4,8 +4,8 @@
   entities:
     light.living_room:
       state: 'on'
-      brightness_pct: 50
-      color_temp: 400
+      brightness_pct: 80
+      color_temp: 300
     light.hallway_light:
       state: 'on'
       brightness_pct: 10
@@ -52,3 +52,39 @@
       state: 'off'
     switch.kitchen_light:
       state: 'off'
+- id: '1617143820468'
+  name: Weekday Wakeup
+  icon: mdi:weather-sunset
+  entities:
+    light.bedside_lamp:
+      state: 'on'
+      brightness_pct: 1
+      color_temp: 650
+    light.living_room:
+      state: 'on'
+      brightness_pct: 10
+      color_temp: 200
+- id: '1617144026198'
+  name: Weekday Awake 1
+  icon: mdi:network-strength-1
+  entities:
+    light.bedside_lamp:
+      state: 'on'
+      brightness_pct: 40
+      color_temp: 350
+    light.living_room:
+      state: 'on'
+      brightness_pct: 40
+      color_temp: 300
+- id: '1617144061850'
+  name: Weekday Awake 2
+  icon: mdi:network-strength-2
+  entities:
+    light.bedside_lamp:
+      state: 'on'
+      brightness_pct: 50
+      color_temp: 350
+    light.living_room:
+      state: 'on'
+      brightness_pct: 80
+      color_temp: 350
