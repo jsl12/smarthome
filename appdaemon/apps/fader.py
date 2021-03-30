@@ -220,7 +220,7 @@ class SceneFader(hass.Hass):
 
         if self.args.get('force_initial', False):
             self.log('Forcing the initial on/off initial_state')
-            for entity, initial_state in self.profile.iloc[0].loc[pd.IndexSlice[:, 'initial_state']].iteritems():
+            for entity, initial_state in self.profile.iloc[0].loc[pd.IndexSlice[:, 'state']].iteritems():
                 if not pd.isna(initial_state):
                     self.log(f'{entity:20} {initial_state}')
                 if initial_state == 'on':
