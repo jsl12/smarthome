@@ -170,6 +170,22 @@ class SceneFader(hass.Hass):
     def active(self) -> bool:
         return self.end_datetime >= self.current_datetime >= self.start_datetime
 
+    @property
+    def next_run_time(self) -> time:
+        return self.profile.index[self.current_datetime <= self.profile.index][0].to_pydatetime().time()
+
+    def cancel_adjust(self):
+        try:
+            self.cancel_timer(self.adjust_timer)
+        except:
+            pass
+
+    def start_next(self):
+        self.cancel_adjust()
+        next_time = self.next_run_time.isoformat()[:8]
+        self.log(f'Setting up next run at {next_time}')
+        self.adjust_timer = self.run_at(callback=self.adjust, start=next_time)
+
     def start_fade(self, kwargs=None):
         self.log(f'Starting Scene fade, calculating profile')
         self.profile = profile_from_scenes(scene_path=self.ha_config,
@@ -177,30 +193,32 @@ class SceneFader(hass.Hass):
                                            final=self.args['final'],
                                            start=self.start_datetime,
                                            end=self.end_datetime)
-        self.log(f'From {self.profile.index[0].time().isoformat()[:8]} to {self.profile.index[-1].time().isoformat()[:8]}')
-        first_time = self.profile.index[self.profile.index >= self.current_datetime][0].to_pydatetime().time().isoformat()[:8]
-        self.log(f'Starting adjust callbacks at {first_time}')
-        # self.adjust_timer = self.run_at(callback=self.adjust, start=first_time)
-        self.adjust_timer = self.run_minutely(callback=self.adjust, start=time.min)
+        self.log(f'Index from {self.profile.index[0].time().isoformat()[:8]} to {self.profile.index[-1].time().isoformat()[:8]}')
+        self.adjust()
+        self.start_next()
 
-    def adjust(self, kwargs):
+    def adjust(self, kwargs=None):
         for ent, s in self.profile[self.profile.index <= self.current_datetime].groupby(level=0, axis=1):
             s.columns = s.columns.droplevel(0)
             s = s.iloc[-1].to_dict()
-            state = s.pop('state')
-            if state == 'on':
-                self.log(f'{ent:20} {s}')
-                self.turn_on(entity_id=ent, **s)
-            elif state == 'off':
-                self.log(f'{ent:20} off')
-                self.turn_off(entity_id=ent)
+            scene_state = s.pop('state')
+            if self.get_state(ent) == 'on':
+                if scene_state == 'on':
+                    self.log(f'{ent:20} {s}')
+                    self.turn_on(entity_id=ent, **s)
+                elif scene_state == 'off':
+                    self.log(f'{ent:20} off')
+                    self.turn_off(entity_id=ent)
+            else:
+                self.log(f'Skipping {ent:20} - off')
 
+        if self.active:
+            self.start_next()
+        else:
+            self.cancel_adjust()
 
     def terminate(self):
-        try:
-            self.cancel_timer(self.adjust_timer)
-        except:
-            pass
+        self.cancel_adjust()
 
         try:
             self.cancel_timer(self.daily_timer)
