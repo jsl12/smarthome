@@ -10,8 +10,8 @@ class GrowLight(hass.Hass):
         self.args:
             entity_id:
             start:
-            end:
             duration:
+            end:
 
         Returns
         -------
