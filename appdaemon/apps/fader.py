@@ -219,7 +219,7 @@ class SceneFader(hass.Hass):
                                            end=self.end_datetime)
 
         if self.args.get('force_initial', False):
-            self.log('Forcing the initial state')
+            self.log('Forcing the initial on/off state')
             for ent, state in self.profile.iloc[0].loc[pd.IndexSlice[:, 'state']].iteritems():
                 if not pd.isna(state):
                     self.log(f'{ent:20} {state}')
@@ -238,15 +238,13 @@ class SceneFader(hass.Hass):
 
     def adjust(self, kwargs=None):
         self.log(f'Adjusting step {self.i+1} at {self.profile.index[self.i].time().isoformat()[:8]}')
-        for ent, s in self.profile[self.profile.index <= self.current_datetime].groupby(level=0, axis=1):
-            s.columns = s.columns.droplevel(0)
-            s = s.iloc[-1].to_dict()
-            scene_state = s.pop('state')
+        for ent, profile_state in self.profile.iloc[self.i].dropna().loc[pd.IndexSlice[:, 'state']].iteritems():
             if self.get_state(ent) == 'on':
-                if scene_state == 'on':
-                    self.log(f'{ent:20} {s}')
-                    self.turn_on(entity_id=ent, **s)
-                elif scene_state == 'off':
+                if profile_state == 'on':
+                    kwargs = self.profile.iloc[self.i].loc[ent].drop('state').to_dict()
+                    self.log(f'{ent:20} {profile_state} {kwargs}')
+                    self.turn_on(entity_id=ent, **kwargs)
+                elif profile_state == 'off':
                     self.log(f'{ent:20} turned off')
                     self.turn_off(entity_id=ent)
             else:
