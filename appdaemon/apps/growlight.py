@@ -18,16 +18,14 @@ class GrowLight(hass.Hass):
 
         """
         self.target = self.args['entity_id']
-
+        self.daily_timer = self.run_daily(callback=self.start_growtime,
+                                          start=self.args['start'])
         hours, minutes, seconds = map(int, self.args['duration'].split(':'))
         self.total_duration: timedelta = timedelta(hours=hours, minutes=minutes, seconds=seconds)
 
-        self.start_time: time = self.parse_time(self.args['start'])
-        if (t := self.args.get('end', None)) is not None:
-            self.force_end_time: time = self.parse_time(t)
-            self.force_end_timer = self.run_daily(self.end_growtime, start=self.force_end_time)
-
-        self.daily_timer = self.run_daily(self.start_growtime, self.start_time)
+        if self.force_end_datetime is not None:
+            self.force_end_timer = self.run_daily(callback=self.end_growtime,
+                                                  start=self.args['end'])
 
         if self.during_growtime:
             self.start_growtime()
@@ -36,7 +34,7 @@ class GrowLight(hass.Hass):
 
     @property
     def start_datetime(self) -> datetime:
-        return datetime.combine(self.date(), self.start_time).astimezone()
+        return datetime.combine(self.date(), self.parse_time(self.args['start'])).astimezone()
 
     @property
     def current_datetime(self) -> datetime:
@@ -48,11 +46,12 @@ class GrowLight(hass.Hass):
 
     @property
     def force_end_datetime(self) -> datetime:
-        return datetime.combine(self.date(), self.force_end_time).astimezone()
+        if (t := self.args.get('end', None)) is not None:
+            return datetime.combine(self.date(), self.parse_time(t)).astimezone()
 
     @property
     def during_growtime(self):
-        return self.start_time < self.time() < self.force_end_time
+        return self.start_datetime < self.current_datetime < self.force_end_datetime
 
     @property
     def remaining_growtime(self) -> timedelta:
@@ -69,13 +68,12 @@ class GrowLight(hass.Hass):
         # if the end will naturally occur before the force end
         if self.natural_end_datetime <= self.force_end_datetime:
             # schedule the end_growtime event
-            self.natural_end_timer = self.run_in(
-                callback=self.end_growtime,
-                delay=int(round(self.remaining_growtime.total_seconds(), 0))
-            )
+            self.natural_end_timer = self.run_at(callback=self.end_growtime,
+                                                 start=self.natural_end_datetime.time().isoformat()[:8])
+
             self.log(f'Scheduled natural end for {self.natural_end_datetime.strftime("%I:%M:%S%p").lower()}')
         else:
-            self.log(f'Force end at {self.force_end_time.strftime("%I:%M:%S%p").lower()} happens before '
+            self.log(f'Force end at {self.force_end_datetime.strftime("%I:%M:%S%p").lower()} happens before '
                      f'natural end at {self.natural_end_datetime.strftime("%I:%M:%S%p").lower()}')
 
         self.previously_accrued = timedelta()
@@ -88,15 +86,19 @@ class GrowLight(hass.Hass):
             self.log(f'{self.target} unavailable')
 
     def end_growtime(self, kwargs=None):
-        self.log(f'Ending grow time on {self.target}')
-        self.turn_off(self.target)
+        state = self.get_state(self.target)
+        if state == 'on':
+            self.log(f'Ending grow time on {self.target}')
+            self.turn_off(self.target)
+        elif state == 'off':
+            self.log(f'{self.target} already off at end of grow time')
         self.terminate()
 
     def handle_on(self, entity=None, attribute=None, old=None, new=None, kwargs=None):
         if self.during_growtime and not hasattr(self, 'on_datetime'):
             self.on_datetime: datetime = self.current_datetime
-            self.log(f'Updated on_datetime {self.on_datetime.strftime("%H:%M:%S")}')
             self.log(f'{self.friendly_name(self.target)} turned on, previously accrued: {self.previously_accrued}')
+            self.log(f'Updated on_datetime {self.on_datetime.strftime("%H:%M:%S")}')
         else:
             if not self.during_growtime:
                 self.log(f'{self.friendly_name(self.target)} turned on outside of grow time')
@@ -106,15 +108,15 @@ class GrowLight(hass.Hass):
 
     def handle_off(self, entity=None, attribute=None, old=None, new=None, kwargs=None):
         if self.during_growtime and hasattr(self, 'on_datetime'):
-            self.log(f'{self.friendly_name(self.target)} turned off, accrued {self.previously_accrued}')
+            self.log(f'{self.friendly_name(self.target)} turned off')
 
             newly_accrued: timedelta = self.current_datetime - self.on_datetime
 
-            del self.on_datetime
-            self.log(f'Removed on_datetime')
-
             self.previously_accrued += newly_accrued
             self.log(f'Added {newly_accrued}, total {self.previously_accrued}')
+
+            del self.on_datetime
+            self.log(f'Removed on_datetime')
         else:
             if not hasattr(self, 'on_datetime'):
                 self.log(f'{self.friendly_name(self.target)} turned off without an on_datetime')
@@ -131,7 +133,8 @@ class GrowLight(hass.Hass):
                 except Exception as e:
                     self.log(f'{e} while cancelling {ev}')
 
-        schedule_events = ['daily_timer', 'natural_end_timer', 'force_end_timer']
+        # schedule_events = ['daily_timer', 'natural_end_timer', 'force_end_timer']
+        schedule_events = ['natural_end_timer']
         for ev in schedule_events:
             if (handle := getattr(self, ev, None)):
                 try:
