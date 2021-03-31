@@ -73,3 +73,20 @@ wind_down_fader:
     - tue
     - wed
     - thu
+
+test:
+  module: pandas_controller
+  class: PandasCtl
+  start: '00:00:00'
+  end: '23:00:00'
+  freq: '15min'
+#  initial: 'scene.weekday_awake_2'
+#  final: 'scene.wind_down'
+  initial: seagreen
+  final: steelblue
+#  initial:
+#    brightness_pct: 1
+#    color_temp: 200
+#  final:
+#    brightness_pct: 100
+#    color_temp: 400
