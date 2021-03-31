@@ -3,7 +3,7 @@ from pathlib import Path
 import pandas as pd
 import yaml
 
-YAML_PATH = Path(r'colors.yaml')
+YAML_PATH = Path(r'/conf/apps/colors.yaml')
 
 def get_colors(path: Path = YAML_PATH) -> pd.DataFrame:
     with path.open('r') as file:

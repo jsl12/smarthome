@@ -13,3 +13,4 @@ http:
 admin:
 api:
 hadashboard:
+invalid_yaml_warnings: 1
