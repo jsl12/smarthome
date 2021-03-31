@@ -48,7 +48,7 @@ office_morning_fader:
   module: fader
   class: SceneFader
   start: '08:30:00'
-  end: '11:00:00'
+  end: '09:00:00'
   force_initial: True
   initial: Office Weekday 1
   final: Office Weekday 2

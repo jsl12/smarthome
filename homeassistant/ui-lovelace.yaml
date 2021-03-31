@@ -86,3 +86,4 @@ views:
       - type: entities
         entities:
           - entity: automation.office_weekday_morning
+          - entity: automation.office_weekday_morning_2

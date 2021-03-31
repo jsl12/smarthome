@@ -11,7 +11,7 @@
     - tue
     - wed
     - thu
-    - sun
+    - fri
   action:
   - service: scene.apply
     data:
@@ -27,12 +27,12 @@
         switch.kitchen_light:
           state: 'on'
   mode: single
-- id: '1616643565060'
-  alias: Weekday Wind Down
+- id: '1617158632641'
+  alias: Office Weekday Morning 2
   description: ''
   trigger:
   - platform: time
-    at: '21:00:00'
+    at: 08:29
   condition:
   - condition: time
     weekday:
@@ -40,9 +40,28 @@
     - tue
     - wed
     - thu
-    - sun
+    - fri
   action:
   - service: scene.turn_on
     target:
-      entity_id: scene.wind_down
+      entity_id: scene.office_weekday_1
+  mode: single
+- id: '1616643565060'
+  alias: Weekday Wind Down
+  description: ''
+  trigger:
+    - platform: time
+      at: '21:00:00'
+  condition:
+    - condition: time
+      weekday:
+        - mon
+        - tue
+        - wed
+        - thu
+        - sun
+  action:
+    - service: scene.turn_on
+      target:
+        entity_id: scene.wind_down
   mode: single
