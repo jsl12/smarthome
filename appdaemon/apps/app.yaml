@@ -44,6 +44,21 @@ morning_fader_2:
     - thu
     - fri
 
+office_morning_fader:
+  module: fader
+  class: SceneFader
+  start: '08:30:00'
+  end: '11:00:00'
+  force_initial: True
+  initial: Office Weekday 1
+  final: Office Weekday 2
+  weekday:
+    - mon
+    - tue
+    - wed
+    - thu
+    - fri
+
 wind_down_fader:
   module: fader
   class: SceneFader

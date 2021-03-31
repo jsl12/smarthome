@@ -87,4 +87,28 @@
     light.living_room:
       state: 'on'
       brightness_pct: 80
+      color_temp: 300
+- id: '1617148473433'
+  icon: mdi:ceiling-light
+  name: Office Weekday 1
+  entities:
+    light.office_desk_light:
+      state: 'on'
+      brightness_pct: 40
+      color_temp: 330
+    light.office:
+      state: 'on'
+      brightness_pct: 5
+      color_temp: 350
+- id: '1617148486035'
+  name: Office Weekday 2
+  icon: mdi:ceiling-light
+  entities:
+    light.office_desk_light:
+      state: 'on'
+      brightness_pct: 100
+      color_temp: 370
+    light.office:
+      state: 'on'
+      brightness_pct: 5
       color_temp: 350

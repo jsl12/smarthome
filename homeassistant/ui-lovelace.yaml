@@ -74,6 +74,11 @@ views:
 
       - type: entities
         entities:
+          - entity: scene.weekday_wakeup
+          - entity: scene.weekday_awake_1
+          - entity: scene.weekday_awake_2
+          - entity: scene.office_weekday_1
+          - entity: scene.office_weekday_2
           - entity: scene.wind_down
           - entity: scene.elena_bed
           - entity: scene.john_bed
