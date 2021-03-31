@@ -19,6 +19,11 @@
         light.office:
           state: 'on'
           color_name: deeppink
+          brightness_pct: 40
+        light.office_desk_light:
+          state: 'on'
+          color_name: deeppink
+          brightness_pct: 100
         switch.kitchen_light:
           state: 'on'
   mode: single
