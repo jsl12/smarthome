@@ -1,5 +1,5 @@
 dutch_grow_light:
-  module: light_control
+  module: growlight
   class: GrowLight
   entity_id: switch.dutch_grow_light
   start: 'sunrise - 03:00:00'
@@ -7,7 +7,7 @@ dutch_grow_light:
   end: 'sunset + 00:30:00'
 
 grow_cabinet:
-  module: light_control
+  module: growlight
   class: GrowLight
   entity_id: switch.grow_cabinet
   start: '09:00:00'
