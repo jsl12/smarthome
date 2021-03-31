@@ -10,6 +10,8 @@
       state: 'on'
       brightness_pct: 10
       color_temp: 200
+    switch.kitchen_light:
+      state: 'on'
 - id: '1617144026198'
   name: Weekday Awake 1
   icon: mdi:network-strength-1
@@ -22,6 +24,8 @@
       state: 'on'
       brightness_pct: 40
       color_temp: 300
+    switch.kitchen_light:
+      state: 'on'
 - id: '1617144061850'
   name: Weekday Awake 2
   icon: mdi:network-strength-2
@@ -34,6 +38,10 @@
       state: 'on'
       brightness_pct: 80
       color_temp: 300
+    switch.kitchen_light:
+      state: 'on'
+    switch.big_lamp:
+      state: 'on'
 - id: '1617148473433'
   icon: mdi:ceiling-light
   name: Office Weekday 1
