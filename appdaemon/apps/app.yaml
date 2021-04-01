@@ -75,18 +75,20 @@ wind_down_fader:
     - thu
 
 test:
-  module: pandas_controller
-  class: PandasCtl
-  start: '00:00:00'
-  end: '23:00:00'
-  freq: '15min'
-#  initial: 'scene.weekday_awake_2'
-#  final: 'scene.wind_down'
-  initial: seagreen
-  final: steelblue
-#  initial:
-#    brightness_pct: 1
-#    color_temp: 200
-#  final:
-#    brightness_pct: 100
-#    color_temp: 400
+  module: fader
+  class: RGBFader
+  start: '08:00:00'
+  end: '09:00:00'
+  freq: '23s'
+  profile: /conf/test_profile.csv
+  initial:
+    light.living_room:
+      brightness_pct: 100
+      color_name: seagreen
+    light.hallway:
+      brightness_pct: 100
+      color_name: seagreen
+  final:
+    light.living_room:
+      brightness_pct: 50
+      color_name: orangered

@@ -1,9 +1,106 @@
 from datetime import datetime
 from pathlib import Path
+from typing import Dict, List
 
 import pandas as pd
 import yaml
 from appdaemon.plugins.hass import hassapi as hass
+
+from colors import get_colors, YAML_PATH
+from pandas_controller import PandasCtl
+
+
+class RGBFader(PandasCtl):
+    """
+        Args:
+            start:
+            end:
+            initial:
+                entity_id:
+                    [color_name|rgb_color:]
+                    [brightness_pct:]
+            final:
+                entity_id:
+                    [color_name|rgb_color:]
+                    [brightness_pct:]
+            [freq: 1min]
+            [profile: <path>]
+
+        """
+    def validate_args(self):
+        required = ['start', 'end', 'initial', 'final']
+        for r in required:
+            assert r in self.args
+
+        assert self.start_datetime < self.end_datetime, f'{self.start_datetime:19} is not before {self.end_datetime:19}'
+
+        valid_keys = ['color_name', 'rgb_color', 'brightness_pct']
+
+        for entity, config in self.args['initial'].items():
+            assert ('color_name' in config or 'rgb_color' in config)
+            assert(all([key in valid_keys for key in config.keys()]))
+
+        for entity, config in self.args['final'].items():
+            assert ('color_name' in config or 'rgb_color' in config)
+            assert(all([key in valid_keys for key in config.keys()]))
+            assert entity in self.args['initial'], f'{entity} is in final state, but not initial state'
+
+    def initialize(self):
+        self.validate_args()
+        self.color_dict: Dict[str, List[int]] = get_colors(YAML_PATH)
+        self.generate_profile()
+        self.log(f'Fade Profile\n{self.profile}')
+
+        if (p := self.args.get('profile', None)) is not None:
+            self.profile.to_csv(Path(p).with_suffix('.csv'))
+
+        super().initialize()
+
+    def generate_profile(self):
+        self.profile = pd.DataFrame(
+            columns=pd.MultiIndex.from_product([self.args['initial'].keys(), ['red', 'green', 'blue']]),
+            index=pd.Index([self.start_datetime, self.end_datetime])
+        )
+        self.place_vals(self.profile.index[0], 'initial')
+        self.place_vals(self.profile.index[-1], 'final')
+
+        self.profile = self.profile.asfreq(self.args.get('freq', '1min'))
+
+        # sometimes using as freq can result in the last index getting removed
+        if self.profile.index[-1] != self.end_datetime:
+            self.place_vals(self.profile.index[-1], 'final')
+
+        self.profile = self.profile.sort_index(axis=1)
+
+        for entity, profile in self.profile.groupby(level=0, axis=1):
+            df = (
+                profile
+                .droplevel(0, axis=1)
+                .applymap(float)
+                .interpolate('time', axis='index')
+                .applymap(round)
+                .applymap(int)
+            )
+            self.profile.loc[:, pd.IndexSlice[entity, :]] = df.values
+
+        self.profile = self.profile.drop_duplicates()
+        if self.profile.columns.is_lexsorted():
+            self.log('Profile is lexsorted')
+
+    def place_vals(self, idx, base_arg):
+        for entity, config in self.args[base_arg].items():
+            if 'color_name' in config:
+                vals = self.color_dict.loc[config['color_name']].values
+            elif 'rgb_color' in config:
+                vals = config['rgb_color']
+
+            try:
+                self.profile.loc[idx, pd.IndexSlice[entity, ['red', 'green', 'blue']]] = [float(v) for v in vals]
+            except KeyError as e:
+                self.log(f'{entity} not in {self.profile.columns.get_level_values(level=0)}')
+
+            if 'brightness_pct' in config:
+                self.profile.loc[idx, (entity, 'brightness_pct')] = config['brightness_pct']
 
 
 class SceneFader(hass.Hass):

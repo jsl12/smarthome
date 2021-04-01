@@ -14,3 +14,4 @@ admin:
 api:
 hadashboard:
 invalid_yaml_warnings: 1
+missing_app_warnings: 1
