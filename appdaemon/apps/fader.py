@@ -30,12 +30,7 @@ class RGBFader(PandasCtl):
     val_kwarg = 'rgb_color'
 
     def validate_args(self):
-        required = ['start', 'end', 'initial', 'final']
-        for r in required:
-            assert r in self.args
-
-        assert self.start_datetime < self.end_datetime, f'{self.start_datetime:19} is not before {self.end_datetime:19}'
-
+        super().validate_args()
         valid_keys = ['color_name', 'rgb_color', 'brightness_pct']
 
         for entity, config in self.args['initial'].items():
@@ -53,10 +48,10 @@ class RGBFader(PandasCtl):
         super().initialize()
 
     def generate_profile(self):
-        self.profile = self.blank_df(cols=['red', 'green', 'blue'])
+        self.profile = self.blank_df(entities=self.args['initial'].keys(), attributes=self.cols)
         self.place_vals(self.profile.index[0], 'initial')
         self.place_vals(self.profile.index[-1], 'final')
-        self.interpolate()
+        super().generate_profile()
 
     def place_vals(self, idx, base_arg):
         for entity, config in self.args[base_arg].items():
@@ -89,7 +84,7 @@ class RGBFader(PandasCtl):
         super().operate(kwargs)
 
 
-class SceneFader(hass.Hass):
+class SceneFader(PandasCtl):
     """
     Arguments
         start:
@@ -98,134 +93,31 @@ class SceneFader(hass.Hass):
         initial:
         final:
         weekday:
-
     """
     def initialize(self):
-        assert self.start_datetime <= self.end_datetime
-        self.log(
-            f'SceneFader {self.args["initial"]} to {self.args["final"]} '
-            f'from {self.start_datetime.strftime("%I:%M%p").lower()} to '
-            f'{self.end_datetime.strftime("%I:%M%p").lower()}'
-        )
+        self.validate_args()
+        super().initialize()
 
-        # this will actually fire self.start_fade
-        self.daily_timer = self.run_daily(callback=self.start_fade,
-                                          start=self.args['start'])
+    def read_scene_config(self):
+        with Path(self.args.get('ha_config', f'/usr/homeassistant/scenes.yaml')).open('r') as file:
+            return {scene['name']: scene['entities'] for scene in yaml.load(file, Loader=yaml.SafeLoader)}
 
-        self.ha_config = Path(self.args.get('ha_config', f'/usr/homeassistant/scenes.yaml'))
-
-    def datetime_arg(self, arg_name: str):
-        return datetime.combine(self.date(), self.parse_time(self.args[arg_name])).astimezone()
-
-    @property
-    def start_datetime(self) -> datetime:
-        return self.datetime_arg('start')
-
-    @property
-    def current_datetime(self) -> datetime:
-        return self.datetime().astimezone()
-
-    @property
-    def end_datetime(self) -> datetime:
-        return self.datetime_arg('end')
-
-    @property
-    def active(self) -> bool:
-        return self.end_datetime >= self.current_datetime >= self.start_datetime
-
-    @property
-    def entities(self):
-        return self.profile.columns.levels[0].values
-
-    def entity_profile(self, entity) -> pd.DataFrame:
-        return self.profile.loc[:, pd.IndexSlice[entity, :]].dropna(how='all').drop_duplicates()
-
-    @property
-    def prev_step(self):
-        return self.profile.iloc[self.i - 1]
-
-    @property
-    def this_step(self):
-        return self.profile.iloc[self.i]
-
-    @property
-    def this_step_time(self, ) -> str:
-        return self.this_step.name.to_pydatetime().time().isoformat()[:8]
-
-    def start_fade(self, kwargs=None):
-        if (days := self.args.get('weekday', False)):
-            if (day := self.current_datetime.date().strftime('%a').lower()) not in days:
-                self.log(f'Not valid for {day}')
-                return
-
-        self.log(f'Starting Scene fade, calculating profile')
-        self.profile = profile_from_scenes(scene_path=self.ha_config,
-                                           initial=self.args['initial'],
-                                           final=self.args['final'],
-                                           start=self.start_datetime,
-                                           end=self.end_datetime)
-
-        if self.args.get('force_initial', False):
-            self.log('Forcing the initial on/off initial_state')
-            for entity, initial_state in self.profile.iloc[0].loc[pd.IndexSlice[:, 'state']].iteritems():
-                if not pd.isna(initial_state):
-                    self.log(f'{entity:20} {initial_state}')
-                if initial_state == 'on':
-                    self.turn_on(entity)
-                elif initial_state == 'off':
-                    self.turn_off(entity)
-
-        self.i = s - 1 if (s := (self.profile.index <= self.current_datetime).sum()) > 0 else 0
-
-        self.log(
-            f'Index from {self.profile.index[0].time().isoformat()[:8]} to '
-            f'{self.profile.index[-1].time().isoformat()[:8]}, '
-            f'step {self.i+1}/{self.profile.shape[0]}'
-        )
-        self.adjust()
-
-    def adjust(self, kwargs=None):
-        self.log(f'Adjusting step {self.i+1} at {self.profile.index[self.i].time().isoformat()[:8]}')
-        for entity, profile_state in self.profile.iloc[self.i].dropna().loc[pd.IndexSlice[:, 'state']].iteritems():
-            if self.get_state(entity) == 'on':
-                if profile_state == 'on':
-                    kwargs = self.profile.iloc[self.i].loc[entity].drop('state').to_dict()
-                    self.log(f'{entity:20} {profile_state} {kwargs}')
-                    self.turn_on(entity_id=entity, **kwargs)
-                elif profile_state == 'off':
-                    self.log(f'{entity:20} turned off')
-                    self.turn_off(entity_id=entity)
-            else:
-                self.log(f'{entity:20} skipped, already off')
-
-        if self.active:
-            self.start_next()
-
-    def start_next(self):
-        self.i += 1
-        try:
-            next_time = self.this_step_time
-        except IndexError:
-            self.log(f'No next adjust time, last at {self.profile.index[-1].time().isoformat()[:8]}')
-        else:
-            self.log(f'Next adjustment at {next_time}')
-            self.adjust_timer = self.run_at(callback=self.adjust, start=next_time, pin_thread=4)
-
-    def cancel_adjust(self):
-        try:
-            self.cancel_timer(self.adjust_timer)
-        except:
-            pass
-        else:
-            del self.adjust_timer
-
-    def terminate(self):
-        self.cancel_adjust()
-
-        try:
-            self.cancel_timer(self.daily_timer)
-        except:
-            pass
+    def generate_profile(self):
+        scenes = self.read_scene_config()
+        self.profile = self.blank_df(entities=scenes[self.args['initial']].keys(), attributes=['brightness_pct', 'color_temp'])
+        start, end = self.profile.index[[0, -1]]
+        for entity in self.profile.columns.get_level_values(0):
+            for attr, val in scenes[self.args['initial']][entity].items():
+                if attr != 'state':
+                    self.profile.loc[start, (entity, attr)] = float(val)
+            for attr, val in scenes[self.args['final']][entity].items():
+                if attr != 'state':
+                    self.profile.loc[end, (entity, attr)] = float(val)
+        self.profile = self.profile.loc[:, ~(pd.isna(self.profile.iloc[[0, -1]]).any())]
+        self.log(f'Profile\n{self.profile.columns}\n{self.profile.index}')
+        # self.log(f'Initial\n{pd.isna(self.profile.iloc[0])}')
+        # self.log(f'Final\n{pd.isna(self.profile.iloc[-1])}')
+        super().generate_profile()
 
 
 def profile_from_scenes(scene_path, initial, final, start: datetime, end: datetime) -> pd.DataFrame:

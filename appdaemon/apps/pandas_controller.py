@@ -17,33 +17,35 @@ class PandasCtl(hass.Hass):
         [freq: 1min]
         [profile: <path>]
     """
+    def validate_args(self):
+        required = ['start', 'end', 'initial', 'final']
+        for r in required:
+            assert r in self.args
+
+        assert self.start_datetime < self.end_datetime, f'{self.start_datetime:19} is not before {self.end_datetime:19}'
+
     def initialize(self):
-        self.generate_profile()
-        assert hasattr(self, 'profile'), f'{self.__name__} needs an operation profile'
         self.start_timer = self.run_daily(callback=self.operate, start=self.args['start'])
         self.log(f'Operation scheduled for {self.parse_time(self.args["start"])}')
 
         if self.active:
+            self.generate_profile()
             last_action = self.profile.index[self.get_last_index()].time().isoformat()[:8]
             self.log(f'Already supposed to be active, starting. Last action: {last_action}')
             self.operate()
 
+    def generate_profile(self):
+        self.interpolate()
         if (p := self.args.get('profile', None)) is not None:
             self.profile.to_csv(Path(p).with_suffix('.csv'))
 
-    def blank_df(self, cols):
+    def blank_df(self, entities, attributes, freq='1min'):
         return pd.DataFrame(
-            columns=pd.MultiIndex.from_product([self.args['initial'].keys(), cols]),
-            index=self.full_index(default_freq='1min')
+            columns=pd.MultiIndex.from_product([entities, attributes]),
+            index=pd.date_range(start=self.start_datetime,
+                                end=self.end_datetime,
+                                freq=self.args.get('freq', freq)).round('S')
         )
-
-    def generate_profile(self):
-        raise NotImplementedError(f'Class for {self.name} needs to have a generate_profile method')
-
-    def full_index(self, default_freq):
-        return pd.date_range(start=self.start_datetime,
-                             end=self.end_datetime,
-                             freq=self.args.get('freq', default_freq)).round('S')
 
     def interpolate(self):
         for entity, profile in self.profile.groupby(level=0, axis=1):
