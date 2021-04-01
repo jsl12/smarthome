@@ -2,6 +2,7 @@ dutch_grow_light:
   module: growlight
   class: GrowLight
   entity_id: switch.dutch_grow_light
+#  assume_started: True
   start: 'sunrise - 03:00:00'
   duration: '14:00:00'
   end: 'sunset + 00:30:00'
@@ -77,9 +78,9 @@ wind_down_fader:
 test:
   module: fader
   class: RGBFader
-  start: '08:00:00'
-  end: '09:00:00'
-  freq: '23s'
+  start: 'sunrise + 02:00:00'
+  end: '13:00:00'
+  freq: '143s'
   profile: /conf/test_profile.csv
   initial:
     light.living_room:

@@ -1,4 +1,6 @@
 appdaemon:
+  invalid_yaml_warnings: 1
+  missing_app_warnings: 1
   latitude: 30.250968
   longitude: -97.748193
   elevation: 150
@@ -13,5 +15,3 @@ http:
 admin:
 api:
 hadashboard:
-invalid_yaml_warnings: 1
-missing_app_warnings: 1

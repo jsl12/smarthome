@@ -1,22 +1,33 @@
 from datetime import datetime
+from pathlib import Path
 
 from appdaemon.plugins.hass import hassapi as hass
 
 
 class PandasCtl(hass.Hass):
+    """
+    Args:
+        start:
+        end:
+        initial:
+            entity_id:
+        final:
+            entity_id:
+        [freq: 1min]
+        [profile: <path>]
+    """
     def initialize(self):
-        self.initial = self.args['initial']
-        self.final = self.args['final']
-        self.freq = self.args.get('freq', '1min')
-
+        assert hasattr(self, 'profile'), f'{self.__name__} needs an operation profile'
         self.start_timer = self.run_daily(callback=self.operate, start=self.args['start'])
-        self.end_timer = self.run_daily(callback=self.stop, start=self.args['end'])
+        self.log(f'Operation scheduled for {self.parse_time(self.args["start"]):8}')
 
         if self.active:
-            self.i = s if (s := (self.profile.index <= self.current_datetime).sum()) > 0 else 0
-            last_action = self.profile.index[self.i - 1].time().isoformat()[:8]
+            last_action = self.profile.index[self.get_last_index()].time().isoformat()[:8]
             self.log(f'Already supposed to be active, starting. Last action: {last_action}')
             self.operate()
+
+        if (p := self.args.get('profile', None)) is not None:
+            self.profile.to_csv(Path(p).with_suffix('.csv'))
 
     @property
     def start_datetime(self) -> datetime:
@@ -34,27 +45,25 @@ class PandasCtl(hass.Hass):
     def active(self):
         return self.start_datetime <= self.current_datetime <= self.end_datetime
 
-    @property
-    def this_step(self):
-        return self.profile.iloc[self.i]
+    def get_last_index(self):
+        return self.get_next_index() - 1
 
-    @property
-    def prev_step(self):
-        return self.profile.iloc[self.i - 1]
+    def get_next_index(self):
+        return (self.profile.index <= self.current_datetime).sum()
 
     def operate(self, kwargs=None):
-        self.log(self.this_step.to_dict())
-        next_operation_time = self.profile.index[self.i].time().isoformat()[:8]
-        self.operate_timer = self.run_at(callback=self.operate, start=next_operation_time)
-        self.log(f'Next operation at {next_operation_time}')
-        self.i += 1
-
-    def stop(self, kwargs=None):
-        return
+        try:
+            next_operation_time = self.profile.index[self.get_next_index()].time().isoformat()[:8]
+        except IndexError as e:
+            self.log(f'Finished operation')
+        else:
+            try:
+                self.operate_timer = self.run_at(callback=self.operate, start=next_operation_time)
+            except ValueError as e:
+                self.log(f'{next_operation_time} is not in the future, not scheduled')
+            else:
+                self.log(f'Next operation at {next_operation_time}')
 
     def terminate(self):
         if hasattr(self, 'start_time'):
             self.cancel_timer(self.start_timer)
-
-        if hasattr(self, 'end_timer'):
-            self.cancel_timer(self.end_timer)
