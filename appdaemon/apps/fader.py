@@ -26,6 +26,9 @@ class RGBFader(PandasCtl):
         [freq: 1min]
         [profile: <path>]
     """
+    cols = ['red', 'green', 'blue']
+    val_kwarg = 'rgb_color'
+
     def validate_args(self):
         required = ['start', 'end', 'initial', 'final']
         for r in required:
@@ -47,7 +50,6 @@ class RGBFader(PandasCtl):
     def initialize(self):
         self.validate_args()
         self.color_dict: Dict[str, List[int]] = get_colors(YAML_PATH)
-        self.generate_profile()
         super().initialize()
 
     def generate_profile(self):
@@ -60,11 +62,11 @@ class RGBFader(PandasCtl):
         for entity, config in self.args[base_arg].items():
             if 'color_name' in config:
                 vals = self.color_dict.loc[config['color_name']].values
-            elif 'rgb_color' in config:
-                vals = config['rgb_color']
+            elif self.val_kwarg in config:
+                vals = config[self.val_kwarg]
 
             try:
-                self.profile.loc[idx, pd.IndexSlice[entity, ['red', 'green', 'blue']]] = [float(v) for v in vals]
+                self.profile.loc[idx, pd.IndexSlice[entity, self.cols]] = [float(v) for v in vals]
             except KeyError as e:
                 self.log(f'{entity} not in {self.profile.columns.get_level_values(level=0)}')
 
@@ -77,7 +79,7 @@ class RGBFader(PandasCtl):
         for entity, config in self.profile.iloc[idx].groupby(level=0):
             current_state = self.get_state(entity)
             if current_state == 'on':
-                kwargs = {'rgb_color': [config[(entity, color)] for color in ['red', 'green', 'blue']]}
+                kwargs = {self.val_kwarg: [config[(entity, color)] for color in self.cols]}
                 if (b := config[entity].get('brightness_pct')):
                     kwargs['brightness_pct'] = b
                 self.turn_on(entity_id=entity, **kwargs)

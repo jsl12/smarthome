@@ -79,8 +79,8 @@ test:
   module: fader
   class: RGBFader
   start: '12:00:00'
-  end: 'sunset'
-  freq: '30s'
+  end: '12:46:00'
+  freq: '15s'
   profile: /conf/test_profile.csv
   initial:
     light.living_room:
