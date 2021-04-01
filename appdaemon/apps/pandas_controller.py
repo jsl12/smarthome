@@ -48,6 +48,10 @@ class PandasCtl(hass.Hass):
         )
 
     def interpolate(self):
+        initial_columns = self.profile.columns
+        self.profile = self.profile.loc[:, ~(pd.isna(self.profile.iloc[[0, -1]]).any())]
+        dropped_columns = [c for c in initial_columns if c not in self.profile.columns]
+        self.log(f'Dropped {dropped_columns} during interpolation')
         for entity, profile in self.profile.groupby(level=0, axis=1):
             df = (
                 profile

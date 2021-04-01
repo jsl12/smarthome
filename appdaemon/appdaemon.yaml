@@ -1,6 +1,6 @@
 appdaemon:
-  invalid_yaml_warnings: 1
-  missing_app_warnings: 1
+  invalid_yaml_warnings: 0
+  missing_app_warnings: 0
   latitude: 30.250968
   longitude: -97.748193
   elevation: 150

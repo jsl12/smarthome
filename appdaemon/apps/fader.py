@@ -113,11 +113,8 @@ class SceneFader(PandasCtl):
             for attr, val in scenes[self.args['final']][entity].items():
                 if attr != 'state':
                     self.profile.loc[end, (entity, attr)] = float(val)
-        self.profile = self.profile.loc[:, ~(pd.isna(self.profile.iloc[[0, -1]]).any())]
-        self.log(f'Profile\n{self.profile.columns}\n{self.profile.index}')
-        # self.log(f'Initial\n{pd.isna(self.profile.iloc[0])}')
-        # self.log(f'Final\n{pd.isna(self.profile.iloc[-1])}')
         super().generate_profile()
+        self.log(f'Profile\n{self.profile.columns}\n{self.profile.index}')
 
 
 def profile_from_scenes(scene_path, initial, final, start: datetime, end: datetime) -> pd.DataFrame:
