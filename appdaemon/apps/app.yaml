@@ -78,9 +78,9 @@ wind_down_fader:
 test:
   module: fader
   class: RGBFader
-  start: 'sunrise + 02:00:00'
-  end: '13:00:00'
-  freq: '143s'
+  start: '12:00:00'
+  end: 'sunset'
+  freq: '30s'
   profile: /conf/test_profile.csv
   initial:
     light.living_room:

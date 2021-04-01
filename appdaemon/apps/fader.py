@@ -51,34 +51,10 @@ class RGBFader(PandasCtl):
         super().initialize()
 
     def generate_profile(self):
-        self.profile = pd.DataFrame(
-            columns=pd.MultiIndex.from_product([self.args['initial'].keys(), ['red', 'green', 'blue']]),
-            index=pd.Index([self.start_datetime, self.end_datetime])
-        )
+        self.profile = self.blank_df(cols=['red', 'green', 'blue'])
         self.place_vals(self.profile.index[0], 'initial')
         self.place_vals(self.profile.index[-1], 'final')
-
-        self.profile = self.profile.asfreq(self.args.get('freq', '1min'))
-        self.profile.index = self.profile.index.round('S')
-
-        # sometimes using as freq can result in the last index getting removed
-        if self.profile.index[-1] != self.end_datetime:
-            self.place_vals(self.profile.index[-1], 'final')
-
-        self.profile = self.profile.sort_index(axis=1)
-
-        for entity, profile in self.profile.groupby(level=0, axis=1):
-            df = (
-                profile
-                .droplevel(0, axis=1)
-                .applymap(float)
-                .interpolate('time', axis='index')
-                .applymap(round)
-                .applymap(int)
-            )
-            self.profile.loc[:, pd.IndexSlice[entity, :]] = df.values
-
-        self.profile = self.profile.drop_duplicates()
+        self.interpolate()
 
     def place_vals(self, idx, base_arg):
         for entity, config in self.args[base_arg].items():
@@ -105,7 +81,7 @@ class RGBFader(PandasCtl):
                 if (b := config[entity].get('brightness_pct')):
                     kwargs['brightness_pct'] = b
                 self.turn_on(entity_id=entity, **kwargs)
-                self.log(f'{entity}\n{kwargs}')
+                self.log(f'Adjusted\n{entity}\n{kwargs}')
             elif current_state == 'off':
                 self.log(f'{entity} off, skipping')
         super().operate(kwargs)
