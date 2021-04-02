@@ -116,6 +116,19 @@ class SceneFader(PandasCtl):
         super().generate_profile()
         self.log(f'Profile\n{self.profile.columns}\n{self.profile.index}')
 
+    def operate(self, kwargs=None):
+        idx = self.get_last_index()
+        self.log(f'Operating step {idx} at {self.profile.index[idx]}')
+        for entity, config in self.profile.iloc[idx].groupby(level=0):
+            current_state = self.get_state(entity)
+            if current_state == 'on':
+                attrs = config.droplevel(0).to_dict()
+                self.turn_on(entity_id=entity, **attrs)
+                self.log(f'Adjusted\n{entity}\n{attrs}')
+            elif current_state == 'off':
+                self.log(f'{entity} off, skipping')
+        super().operate(kwargs)
+
 
 def profile_from_scenes(scene_path, initial, final, start: datetime, end: datetime) -> pd.DataFrame:
     with Path(scene_path).open('r') as file:
