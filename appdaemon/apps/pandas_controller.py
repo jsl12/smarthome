@@ -1,9 +1,9 @@
 from datetime import datetime
 from pathlib import Path
 
+import pandas as pd
 from appdaemon.plugins.hass import hassapi as hass
 
-import pandas as pd
 
 class PandasCtl(hass.Hass):
     """
@@ -25,8 +25,15 @@ class PandasCtl(hass.Hass):
         assert self.start_datetime < self.end_datetime, f'{self.start_datetime:19} is not before {self.end_datetime:19}'
 
     def initialize(self):
+        """
+        Handles scheduling the daily operation
+
+        Returns
+        -------
+
+        """
         self.start_timer = self.run_daily(callback=self.operate, start=self.args['start'])
-        self.log(f'Operation scheduled for {self.parse_time(self.args["start"])}')
+        self.log(f'Operation initially scheduled for {self.parse_time(self.args["start"])}')
 
         if self.active:
             self.generate_profile()
@@ -35,11 +42,35 @@ class PandasCtl(hass.Hass):
             self.operate()
 
     def generate_profile(self):
+        """
+        Handles the interpolation of the numeric columns when generate_profile is called by the descendant class.
+
+        Returns
+        -------
+
+        """
         self.interpolate()
         if (p := self.args.get('profile', None)) is not None:
             self.profile.to_csv(Path(p).with_suffix('.csv'))
 
     def blank_df(self, entities, attributes, freq='1min'):
+        """
+        Provides a standard method for generating a blank DataFrame based on the entites and their attributes used
+
+        Parameters
+        ----------
+        entities : List[str]
+            List of entity IDs used
+        attributes : List[str]
+            List of entity attributes
+        freq : str
+            Frequency str
+            https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#timeseries-offset-aliases
+
+        Returns
+        -------
+
+        """
         return pd.DataFrame(
             columns=pd.MultiIndex.from_product([entities, attributes]),
             index=pd.date_range(start=self.start_datetime,
@@ -48,10 +79,19 @@ class PandasCtl(hass.Hass):
         )
 
     def interpolate(self):
+        """
+        Interpolates the columns that had both initial and final values
+
+        Returns
+        -------
+
+        """
+        # drops the columns that didn't have both initial and final values
         initial_columns = self.profile.columns
         self.profile = self.profile.loc[:, ~(pd.isna(self.profile.iloc[[0, -1]]).any())]
         dropped_columns = [c for c in initial_columns if c not in self.profile.columns]
         self.log(f'Dropped {dropped_columns} during interpolation')
+
         for entity, profile in self.profile.groupby(level=0, axis=1):
             df = (
                 profile
@@ -92,6 +132,18 @@ class PandasCtl(hass.Hass):
             return 0
 
     def operate(self, kwargs=None):
+        """
+        Only handles scheduling the next operation. All other logic needs to happen in the overridden
+        method.
+
+        Parameters
+        ----------
+        kwargs :
+
+        Returns
+        -------
+
+        """
         try:
             next_operation_time = self.profile.index[self.get_next_index()].time().isoformat()[:8]
         except IndexError as e:

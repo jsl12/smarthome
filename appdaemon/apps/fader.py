@@ -1,10 +1,8 @@
-from datetime import datetime
 from pathlib import Path
 from typing import Dict, List
 
 import pandas as pd
 import yaml
-from appdaemon.plugins.hass import hassapi as hass
 
 from colors import get_colors, YAML_PATH
 from pandas_controller import PandasCtl
