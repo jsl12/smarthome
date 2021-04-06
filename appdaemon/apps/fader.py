@@ -114,11 +114,21 @@ class SceneFader(PandasCtl):
                 if attr != 'state':
                     self.profile.loc[end, (entity, attr)] = float(val)
         super().generate_profile()
-        self.log(f'Profile\n{self.profile.columns}\n{self.profile.index}')
+        # self.log(f'Profile\n{self.profile.columns}\n{self.profile.index}')
 
     def operate(self, kwargs=None):
         idx = self.get_last_index()
         self.log(f'Operating step {idx} at {self.profile.index[idx]}')
+
+        if idx == self.profile.index[0]:
+            scene = self.args["initial"].lower().replace(" ", "_")
+            self.turn_on(f'scene.{scene}')
+            self.log(f'Activated scene.{scene}')
+        elif idx == self.profile.index[-1]:
+            scene = self.args["final"].lower().replace(" ", "_")
+            self.turn_on(f'scene.{scene}')
+            self.log(f'Activated scene.{scene}')
+
         for entity, config in self.profile.iloc[idx].groupby(level=0):
             current_state = self.get_state(entity)
             if current_state == 'on':
@@ -127,51 +137,5 @@ class SceneFader(PandasCtl):
                 self.log(f'Adjusted\n{entity}\n{attrs}')
             elif current_state == 'off':
                 self.log(f'{entity} off, skipping')
+
         super().operate(kwargs)
-
-
-def profile_from_scenes(scene_path, initial, final, start: datetime, end: datetime) -> pd.DataFrame:
-    with Path(scene_path).open('r') as file:
-        scenes = {s['name']:s for s in yaml.load(file, Loader=yaml.SafeLoader)}
-    return create_profile(initial=scenes[initial]['entities'],
-                          final=scenes[final]['entities'],
-                          start=start,
-                          end=end)
-
-
-def create_profile(initial, final, start: datetime, end: datetime) -> pd.DataFrame:
-    df = pd.DataFrame(
-        columns=pd.MultiIndex.from_product([
-            pd.Index(initial.keys()).union(final.keys()).values,
-            ['state', 'brightness_pct', 'color_temp']
-        ]),
-        index=pd.date_range(start=start, end=end, freq='1min')
-    )
-
-    for e, attrs in initial.items():
-        for a, val in attrs.items():
-            df.iloc[0].loc[e, a] = val
-
-    for e, attrs in final.items():
-        for a, val in attrs.items():
-            df.iloc[-1].loc[e, a] = val
-
-    states = df.loc[:, pd.IndexSlice[:, 'state']]
-    initially_on = states.iloc[0] == 'on'
-    ffill_cols = states.loc[:, initially_on].columns
-    df.loc[:, ffill_cols] = df.loc[:, ffill_cols].fillna(method='ffill')
-
-    fill_numeric(df, 'brightness_pct')
-    fill_numeric(df, 'color_temp')
-    return df[~df.duplicated(keep='first')]
-
-
-def fill_numeric(df: pd.DataFrame, attr: str) -> pd.DataFrame:
-    cols = df.iloc[[0, -1]].loc[:, pd.IndexSlice[:, attr]].dropna(how='all', axis=1).columns
-    inter_cols = df.iloc[[0, -1]].loc[:, pd.IndexSlice[:, attr]].dropna(how='any', axis=1).columns
-    ffill_cols = df[cols].loc[:, pd.isna(df[cols].iloc[-1])].columns
-    bfill_cols = df[cols].loc[:, pd.isna(df[cols].iloc[0])].columns
-    df.loc[:, inter_cols] = df.loc[:, inter_cols].applymap(float).interpolate('linear').applymap(round).applymap(int)
-    df.loc[:, ffill_cols] = df[ffill_cols].fillna(method='ffill')
-    df.loc[:, bfill_cols] = df[bfill_cols].fillna(method='bfill')
-    return df

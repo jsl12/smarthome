@@ -85,13 +85,18 @@ class PandasCtl(hass.Hass):
         return self.get_next_index() - 1
 
     def get_next_index(self):
-        return (self.profile.index <= self.current_datetime).sum()
+        try:
+            return (self.profile.index <= self.current_datetime).sum()
+        except AttributeError:
+            self.generate_profile()
+            return 0
 
     def operate(self, kwargs=None):
         try:
             next_operation_time = self.profile.index[self.get_next_index()].time().isoformat()[:8]
         except IndexError as e:
             self.log(f'Finished operation')
+            del self.profile
         else:
             try:
                 self.operate_timer = self.run_at(callback=self.operate, start=next_operation_time)
