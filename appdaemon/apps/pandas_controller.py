@@ -1,8 +1,11 @@
 from datetime import datetime
 from pathlib import Path
+from typing import List
 
 import pandas as pd
 from appdaemon.plugins.hass import hassapi as hass
+
+from colors import get_colors, YAML_PATH
 
 
 class PandasCtl(hass.Hass):
@@ -16,7 +19,66 @@ class PandasCtl(hass.Hass):
             entity_id:
         [freq: 1min]
         [profile: <path>]
+
+    Required overrides:
+        self.validate_args()
+        self.generate_profile()
+        self.populate()
+        self.entities
+        self.attributes
     """
+    YAML_PATH: Path = YAML_PATH
+
+    @property
+    def entities(self) -> List[str]:
+        raise NotImplementedError
+
+    @property
+    def attributes(self) -> List[str]:
+        raise NotImplementedError
+
+    @property
+    def start_datetime(self) -> datetime:
+        return datetime.combine(self.date(), self.parse_time(self.args['start'])).astimezone()
+
+    @property
+    def current_datetime(self) -> datetime:
+        return self.datetime().astimezone()
+
+    @property
+    def end_datetime(self) -> datetime:
+        return datetime.combine(self.date(), self.parse_time(self.args['end'])).astimezone()
+
+    @property
+    def active(self):
+        return self.start_datetime <= self.current_datetime <= self.end_datetime
+
+    @property
+    def prev_index(self):
+        return self.next_index - 1
+
+    @property
+    def next_index(self):
+        try:
+            return (self.profile.index <= self.current_datetime).sum()
+        except AttributeError:
+            self.generate_profile()
+            return 0
+
+    def initialize(self):
+        self.validate_args()
+
+        self.colors = get_colors(self.YAML_PATH)
+
+        self.start_timer = self.run_daily(callback=self.operate, start=self.args['start'])
+        self.log(f'Operation initially scheduled for {self.parse_time(self.args["start"])}')
+
+        if self.active:
+            self.generate_profile()
+            last_action_time = self.profile.index[self.prev_index].time().isoformat()[:8]
+            self.log(f'Already supposed to be active, starting. Last action: {last_action_time}')
+            self.operate()
+
     def validate_args(self):
         required = ['start', 'end', 'initial', 'final']
         for r in required:
@@ -24,38 +86,37 @@ class PandasCtl(hass.Hass):
 
         assert self.start_datetime < self.end_datetime, f'{self.start_datetime:19} is not before {self.end_datetime:19}'
 
-    def initialize(self):
-        """
-        Handles scheduling the daily operation
-
-        Returns
-        -------
-
-        """
-        self.start_timer = self.run_daily(callback=self.operate, start=self.args['start'])
-        self.log(f'Operation initially scheduled for {self.parse_time(self.args["start"])}')
-
-        if self.active:
-            self.generate_profile()
-            last_action = self.profile.index[self.get_last_index()].time().isoformat()[:8]
-            self.log(f'Already supposed to be active, starting. Last action: {last_action}')
-            self.operate()
-
     def generate_profile(self):
         """
-        Handles the interpolation of the numeric columns when generate_profile is called by the descendant class.
+        Handles generating the operation profile which is a `pd.DataFrame` object
 
         Returns
         -------
 
         """
-        self.interpolate()
-        if (p := self.args.get('profile', None)) is not None:
-            self.profile.to_csv(Path(p).with_suffix('.csv'))
+        self.profile = self.blank_df(entities=self.entities,
+                                     attributes=self.attributes)
+        try:
+            self.populate()
+        except Exception as e:
+            self.log(f'Error populating profile on {self.name}')
+            self.log(e)
+        else:
+            try:
+                self.interpolate()
+            except Exception as e:
+                self.log(f'Error interpolating with {self.name}')
+                self.log(e)
+                raise
+            else:
+                if (profile_path := self.args.get('profile', None)) is not None:
+                    dest = Path(profile_path).with_suffix('.csv')
+                    self.log(f'Saving profile to {dest}')
+                    self.profile.to_csv(dest)
 
     def blank_df(self, entities, attributes, freq='1min'):
         """
-        Provides a standard method for generating a blank DataFrame based on the entites and their attributes used
+        Provides a standard method for generating a blank DataFrame based on the entities and their attributes used
 
         Parameters
         ----------
@@ -72,11 +133,14 @@ class PandasCtl(hass.Hass):
 
         """
         return pd.DataFrame(
-            columns=pd.MultiIndex.from_product([entities, attributes]),
+            columns=pd.MultiIndex.from_product([entities, attributes]).drop_duplicates(),
             index=pd.date_range(start=self.start_datetime,
                                 end=self.end_datetime,
                                 freq=self.args.get('freq', freq)).round('S')
         )
+
+    def populate(self):
+        raise NotImplementedError
 
     def interpolate(self):
         """
@@ -105,32 +169,6 @@ class PandasCtl(hass.Hass):
 
         self.profile = self.profile.drop_duplicates().sort_index(axis=1)
 
-    @property
-    def start_datetime(self) -> datetime:
-        return datetime.combine(self.date(), self.parse_time(self.args['start'])).astimezone()
-
-    @property
-    def current_datetime(self) -> datetime:
-        return self.datetime().astimezone()
-
-    @property
-    def end_datetime(self) -> datetime:
-        return datetime.combine(self.date(), self.parse_time(self.args['end'])).astimezone()
-
-    @property
-    def active(self):
-        return self.start_datetime <= self.current_datetime <= self.end_datetime
-
-    def get_last_index(self):
-        return self.get_next_index() - 1
-
-    def get_next_index(self):
-        try:
-            return (self.profile.index <= self.current_datetime).sum()
-        except AttributeError:
-            self.generate_profile()
-            return 0
-
     def operate(self, kwargs=None):
         """
         Only handles scheduling the next operation. All other logic needs to happen in the overridden
@@ -145,7 +183,7 @@ class PandasCtl(hass.Hass):
 
         """
         try:
-            next_operation_time = self.profile.index[self.get_next_index()].time().isoformat()[:8]
+            next_operation_time = self.profile.index[self.next_index].time().isoformat()[:8]
         except IndexError as e:
             self.log(f'Finished operation')
             del self.profile

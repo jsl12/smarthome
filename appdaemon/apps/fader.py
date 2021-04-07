@@ -1,10 +1,9 @@
 from pathlib import Path
-from typing import Dict, List
+from typing import List, Dict
 
 import pandas as pd
 import yaml
 
-from colors import get_colors, YAML_PATH
 from pandas_controller import PandasCtl
 
 
@@ -40,21 +39,22 @@ class RGBFader(PandasCtl):
             assert(all([key in valid_keys for key in config.keys()]))
             assert entity in self.args['initial'], f'{entity} is in final state, but not initial state'
 
-    def initialize(self):
-        self.validate_args()
-        self.color_dict: Dict[str, List[int]] = get_colors(YAML_PATH)
-        super().initialize()
+    @property
+    def entities(self):
+        return [entity_id for entity_id, attributes in self.args['initial'].items() if entity_id.split('.')[0] == 'light']
 
-    def generate_profile(self):
-        self.profile = self.blank_df(entities=self.args['initial'].keys(), attributes=self.cols)
+    @property
+    def attributes(self):
+        return ['rgb_color']
+
+    def populate(self):
         self.place_vals(self.profile.index[0], 'initial')
         self.place_vals(self.profile.index[-1], 'final')
-        super().generate_profile()
 
     def place_vals(self, idx, base_arg):
         for entity, config in self.args[base_arg].items():
             if 'color_name' in config:
-                vals = self.color_dict.loc[config['color_name']].values
+                vals = self.colors.loc[config['color_name']].values
             elif self.val_kwarg in config:
                 vals = config[self.val_kwarg]
 
@@ -67,7 +67,7 @@ class RGBFader(PandasCtl):
                 self.profile.loc[idx, (entity, 'brightness_pct')] = config['brightness_pct']
 
     def operate(self, kwargs=None):
-        idx = self.get_last_index()
+        idx = self.prev_index
         self.log(f'Operating step {idx} at {self.profile.index[idx]}')
         for entity, config in self.profile.iloc[idx].groupby(level=0):
             current_state = self.get_state(entity)
@@ -92,30 +92,40 @@ class SceneFader(PandasCtl):
         final:
         weekday:
     """
-    def initialize(self):
-        self.validate_args()
-        super().initialize()
+    @property
+    def initial_scene(self):
+        return self.read_scene_config()[self.args['initial']]
 
-    def read_scene_config(self):
+    @property
+    def final_scene(self):
+        return self.read_scene_config()[self.args['final']]
+
+    @property
+    def entities(self) -> List[str]:
+        return [ent for ent, attrs in self.initial_scene.items()] + \
+               [ent for ent, attrs in self.final_scene.items()]
+
+    @property
+    def attributes(self) -> List[str]:
+        return [attr for ent, attrs in self.initial_scene.items() for attr, val in attrs.items()] + \
+               [attr for ent, attrs in self.final_scene.items() for attr, val in attrs.items()]
+
+    def read_scene_config(self) -> Dict:
         with Path(self.args.get('ha_config', f'/usr/homeassistant/scenes.yaml')).open('r') as file:
             return {scene['name']: scene['entities'] for scene in yaml.load(file, Loader=yaml.SafeLoader)}
 
-    def generate_profile(self):
-        scenes = self.read_scene_config()
-        self.profile = self.blank_df(entities=scenes[self.args['initial']].keys(), attributes=['brightness_pct', 'color_temp'])
-        start, end = self.profile.index[[0, -1]]
-        for entity in self.profile.columns.get_level_values(0):
-            for attr, val in scenes[self.args['initial']][entity].items():
+    def populate(self):
+        self.place_val(self.profile.index[0], self.initial_scene)
+        self.place_val(self.profile.index[-1], self.final_scene)
+
+    def place_val(self, idx, scene):
+        for entity, attrs in scene.items():
+            for attr, val in attrs.items():
                 if attr != 'state':
-                    self.profile.loc[start, (entity, attr)] = float(val)
-            for attr, val in scenes[self.args['final']][entity].items():
-                if attr != 'state':
-                    self.profile.loc[end, (entity, attr)] = float(val)
-        super().generate_profile()
-        # self.log(f'Profile\n{self.profile.columns}\n{self.profile.index}')
+                    self.profile.loc[idx, (entity, attr)] = float(val)
 
     def operate(self, kwargs=None):
-        idx = self.get_last_index()
+        idx = self.prev_index
         self.log(f'Operating step {idx} at {self.profile.index[idx]}')
 
         if idx == self.profile.index[0]:
@@ -126,14 +136,17 @@ class SceneFader(PandasCtl):
             scene = self.args["final"].lower().replace(" ", "_")
             self.turn_on(f'scene.{scene}')
             self.log(f'Activated scene.{scene}')
-
-        for entity, config in self.profile.iloc[idx].groupby(level=0):
-            current_state = self.get_state(entity)
-            if current_state == 'on':
-                attrs = config.droplevel(0).to_dict()
-                self.turn_on(entity_id=entity, **attrs)
-                self.log(f'Adjusted\n{entity}\n{attrs}')
-            elif current_state == 'off':
-                self.log(f'{entity} off, skipping')
+        else:
+            log_str = ['Operation:']
+            for entity, config in self.profile.iloc[idx].groupby(level=0):
+                current_state = self.get_state(entity)
+                if current_state == 'on':
+                    attrs = config.droplevel(0).to_dict()
+                    self.turn_on(entity_id=entity, **attrs)
+                    log_str.append(f'{entity}: {attrs}')
+                elif current_state == 'off':
+                    self.log(f'{entity} off, skipping')
+                    return
+                self.log('\n'.join(log_str))
 
         super().operate(kwargs)
