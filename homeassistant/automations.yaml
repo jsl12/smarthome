@@ -1,9 +1,9 @@
-- id: '1616566126519'
-  alias: Office Weekday Morning
-  description: Gets Elena's office ready in the morning
+- id: '1617768192276'
+  alias: Weekday Pink
+  description: Makes it pink in the office in the morning
   trigger:
   - platform: time
-    at: 07:00:00
+    at: 07:00
   condition:
   - condition: time
     weekday:
@@ -27,12 +27,12 @@
         switch.kitchen_light:
           state: 'on'
   mode: single
-- id: '1617158632641'
-  alias: Office Weekday Morning 2
-  description: ''
+- id: '1616566126519'
+  alias: Office Weekday Morning
+  description: Gets Elena's office ready in the morning
   trigger:
   - platform: time
-    at: 08:29
+    at: 08:14
   condition:
   - condition: time
     weekday:
@@ -45,23 +45,46 @@
   - service: scene.turn_on
     target:
       entity_id: scene.office_weekday_1
+    data:
+      transition: 30
+  mode: single
+- id: '1617158632641'
+  alias: Office Weekday Morning 2
+  description: ''
+  trigger:
+  - platform: time
+    at: 08:31
+  condition:
+  - condition: time
+    weekday:
+    - mon
+    - tue
+    - wed
+    - thu
+    - fri
+  action:
+  - service: scene.turn_on
+    target:
+      entity_id: scene.office_weekday_2
+    data:
+      transition: 30
   mode: single
 - id: '1616643565060'
   alias: Weekday Wind Down
   description: ''
   trigger:
-    - platform: time
-      at: '21:00:00'
+  - platform: time
+    at: '21:00:00'
   condition:
-    - condition: time
-      weekday:
-        - mon
-        - tue
-        - wed
-        - thu
-        - sun
+  - condition: time
+    weekday:
+    - mon
+    - tue
+    - wed
+    - thu
+    - sun
   action:
-    - service: scene.turn_on
-      target:
-        entity_id: scene.wind_down
+  - service: scene.turn_on
+    target:
+      entity_id: scene.wind_down
   mode: single
