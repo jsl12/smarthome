@@ -44,3 +44,7 @@ cloud:
           - living room pair
           - main lights
         room: living room
+
+duckdns:
+  domain: jslhomeassistant
+  access_token: !secret duckdns_token
