@@ -51,7 +51,8 @@ class PandasCtl(hass.Hass):
 
     @property
     def prev_index(self):
-        return self.next_index - 1
+        idx = self.next_index
+        return 0 if idx <= 0 else idx
 
     @property
     def next_index(self):
@@ -115,6 +116,7 @@ class PandasCtl(hass.Hass):
                     dest = Path(profile_path).with_suffix('.csv')
                     self.log(f'Saving profile to {dest}')
                     self.profile.to_csv(dest)
+        self.log('Columns:\n' + '\n'.join(str(c) for c in self.profile.columns))
 
     def populate(self):
         raise NotImplementedError
