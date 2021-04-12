@@ -98,11 +98,6 @@ crimson:
   - 220
   - 20
   - 60
-cyan:
-  dec_rgb:
-  - 0
-  - 255
-  - 255
 darkblue:
   dec_rgb:
   - 0
@@ -128,11 +123,6 @@ darkgreen:
   - 0
   - 100
   - 0
-darkgrey:
-  dec_rgb:
-  - 169
-  - 169
-  - 169
 darkkhaki:
   dec_rgb:
   - 189
@@ -183,11 +173,6 @@ darkslategray:
   - 47
   - 79
   - 79
-darkslategrey:
-  dec_rgb:
-  - 47
-  - 79
-  - 79
 darkturquoise:
   dec_rgb:
   - 0
@@ -209,11 +194,6 @@ deepskyblue:
   - 191
   - 255
 dimgray:
-  dec_rgb:
-  - 105
-  - 105
-  - 105
-dimgrey:
   dec_rgb:
   - 105
   - 105
@@ -278,11 +258,6 @@ greenyellow:
   - 173
   - 255
   - 47
-grey:
-  dec_rgb:
-  - 128
-  - 128
-  - 128
 honeydew:
   dec_rgb:
   - 240
@@ -363,11 +338,6 @@ lightgreen:
   - 144
   - 238
   - 144
-lightgrey:
-  dec_rgb:
-  - 211
-  - 211
-  - 211
 lightpink:
   dec_rgb:
   - 255
@@ -389,11 +359,6 @@ lightskyblue:
   - 206
   - 250
 lightslategray:
-  dec_rgb:
-  - 119
-  - 136
-  - 153
-lightslategrey:
   dec_rgb:
   - 119
   - 136
@@ -423,11 +388,6 @@ linen:
   - 250
   - 240
   - 230
-magenta:
-  dec_rgb:
-  - 255
-  - 0
-  - 255
 maroon:
   dec_rgb:
   - 128
@@ -654,11 +614,6 @@ slateblue:
   - 90
   - 205
 slategray:
-  dec_rgb:
-  - 112
-  - 128
-  - 144
-slategrey:
   dec_rgb:
   - 112
   - 128
