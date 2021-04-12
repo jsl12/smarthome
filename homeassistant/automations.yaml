@@ -88,3 +88,23 @@
     target:
       entity_id: scene.wind_down
   mode: single
+- id: '1617855367959'
+  alias: Bedside Auto Off
+  description: ''
+  trigger:
+  - platform: time
+    at: 02:00:00
+  condition:
+  - condition: time
+    weekday:
+    - mon
+    - tue
+    - wed
+    - thu
+    - fri
+  action:
+  - type: turn_off
+    device_id: 6091d1dd4716f090db1ed154f2614e5b
+    entity_id: light.bedside_lamp
+    domain: light
+  mode: single
