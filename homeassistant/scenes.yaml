@@ -65,7 +65,7 @@
     light.office:
       state: 'on'
       brightness_pct: 5
-      color_temp: 350
+      color_temp: 500
 - id: '1616560862328'
   icon: mdi:trending-down
   name: Wind Down
