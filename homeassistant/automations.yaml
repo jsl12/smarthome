@@ -123,14 +123,14 @@
       scene_id: leaving
       snapshot_entities:
       - light.living_room
-      - switch.kitchen
+      - switch.kitchen_light
       - switch.big_lamp
   - service: scene.apply
     data:
       entities:
         light.living_room:
           state: 'off'
-        switch.kitchen:
+        switch.kitchen_light:
           state: 'off'
         switch.big_lamp:
           state: 'off'
