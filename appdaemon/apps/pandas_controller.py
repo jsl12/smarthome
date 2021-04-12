@@ -2,11 +2,10 @@ from datetime import datetime
 from pathlib import Path
 from typing import List
 
-import pandas as pd
 from appdaemon.plugins.hass import hassapi as hass
 
 import colors
-from helpers import scene_df, HOMEASSISTANT_CONFIG_DIR
+import helpers
 
 
 class PandasCtl(hass.Hass):
@@ -91,22 +90,23 @@ class PandasCtl(hass.Hass):
         -------
 
         """
-        self.profile = scene_df(
+        self.profile = helpers.scene_df(
             start=self.start_datetime,
             end=self.end_datetime,
             freq='1min',
             entities=self.entities,
-            config_dir=HOMEASSISTANT_CONFIG_DIR
+            config_dir=helpers.HOMEASSISTANT_CONFIG_DIR
         )
 
         try:
+            # modify self.profile with the initial values
             self.populate()
         except Exception as e:
             self.log(f'Error populating profile on {self.name}')
             raise
         else:
             try:
-                self.profile = self.interpolate(self.profile)
+                self.profile = helpers.interpolate(self.profile)
             except Exception as e:
                 self.log(f'Error interpolating with {self.name}')
                 raise
@@ -118,32 +118,6 @@ class PandasCtl(hass.Hass):
 
     def populate(self):
         raise NotImplementedError
-
-    def interpolate(self, df: pd.DataFrame) -> pd.DataFrame:
-        """
-        Interpolates the columns that had both initial and final values
-
-        Returns
-        -------
-
-        """
-        # drops the columns that didn't have both initial and final values
-        initial_columns = df.columns
-        df = df.loc[:, ~(pd.isna(df.iloc[[0, -1]]).any())]
-        dropped_columns = [c for c in initial_columns if c not in df.columns]
-        self.log(f'Dropped {dropped_columns} during interpolation')
-
-        for entity, profile in df.groupby(level=0, axis=1):
-            df.loc[:, pd.IndexSlice[entity, :]] = (
-                profile
-                    .droplevel(0, axis=1)
-                    .applymap(float)
-                    .interpolate('time', axis='index')
-                    .applymap(round)
-                    .applymap(int)
-            ).values
-
-        return df.drop_duplicates().sort_index(axis=1)
 
     def operate(self, kwargs=None):
         """
