@@ -5,7 +5,8 @@ from typing import List
 import pandas as pd
 from appdaemon.plugins.hass import hassapi as hass
 
-from colors import get_colors, YAML_PATH
+import colors
+from helpers import scene_df, HOMEASSISTANT_CONFIG_DIR
 
 
 class PandasCtl(hass.Hass):
@@ -27,14 +28,10 @@ class PandasCtl(hass.Hass):
         self.entities
         self.attributes
     """
-    YAML_PATH: Path = YAML_PATH
+    COLOR_YAML: Path = colors.YAML_PATH
 
     @property
     def entities(self) -> List[str]:
-        raise NotImplementedError
-
-    @property
-    def attributes(self) -> List[str]:
         raise NotImplementedError
 
     @property
@@ -68,7 +65,7 @@ class PandasCtl(hass.Hass):
     def initialize(self):
         self.validate_args()
 
-        self.colors = get_colors(self.YAML_PATH)
+        self.colors = colors.get_colors(self.COLOR_YAML)
 
         self.start_timer = self.run_daily(callback=self.operate, start=self.args['start'])
         self.log(f'Operation initially scheduled for {self.parse_time(self.args["start"])}')
@@ -94,19 +91,24 @@ class PandasCtl(hass.Hass):
         -------
 
         """
-        self.profile = self.blank_df(entities=self.entities,
-                                     attributes=self.attributes)
+        self.profile = scene_df(
+            start=self.start_datetime,
+            end=self.end_datetime,
+            freq='1min',
+            entities=self.entities,
+            config_dir=HOMEASSISTANT_CONFIG_DIR
+        )
+
         try:
             self.populate()
         except Exception as e:
             self.log(f'Error populating profile on {self.name}')
-            self.log(e)
+            raise
         else:
             try:
-                self.interpolate()
+                self.profile = self.interpolate(self.profile)
             except Exception as e:
                 self.log(f'Error interpolating with {self.name}')
-                self.log(e)
                 raise
             else:
                 if (profile_path := self.args.get('profile', None)) is not None:
@@ -114,35 +116,10 @@ class PandasCtl(hass.Hass):
                     self.log(f'Saving profile to {dest}')
                     self.profile.to_csv(dest)
 
-    def blank_df(self, entities, attributes, freq='1min'):
-        """
-        Provides a standard method for generating a blank DataFrame based on the entities and their attributes used
-
-        Parameters
-        ----------
-        entities : List[str]
-            List of entity IDs used
-        attributes : List[str]
-            List of entity attributes
-        freq : str
-            Frequency str
-            https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#timeseries-offset-aliases
-
-        Returns
-        -------
-
-        """
-        return pd.DataFrame(
-            columns=pd.MultiIndex.from_product([entities, attributes]).drop_duplicates(),
-            index=pd.date_range(start=self.start_datetime,
-                                end=self.end_datetime,
-                                freq=self.args.get('freq', freq)).round('S')
-        )
-
     def populate(self):
         raise NotImplementedError
 
-    def interpolate(self):
+    def interpolate(self, df: pd.DataFrame) -> pd.DataFrame:
         """
         Interpolates the columns that had both initial and final values
 
@@ -151,23 +128,22 @@ class PandasCtl(hass.Hass):
 
         """
         # drops the columns that didn't have both initial and final values
-        initial_columns = self.profile.columns
-        self.profile = self.profile.loc[:, ~(pd.isna(self.profile.iloc[[0, -1]]).any())]
-        dropped_columns = [c for c in initial_columns if c not in self.profile.columns]
+        initial_columns = df.columns
+        df = df.loc[:, ~(pd.isna(df.iloc[[0, -1]]).any())]
+        dropped_columns = [c for c in initial_columns if c not in df.columns]
         self.log(f'Dropped {dropped_columns} during interpolation')
 
-        for entity, profile in self.profile.groupby(level=0, axis=1):
-            df = (
+        for entity, profile in df.groupby(level=0, axis=1):
+            df.loc[:, pd.IndexSlice[entity, :]] = (
                 profile
                     .droplevel(0, axis=1)
                     .applymap(float)
                     .interpolate('time', axis='index')
                     .applymap(round)
                     .applymap(int)
-            )
-            self.profile.loc[:, pd.IndexSlice[entity, :]] = df.values
+            ).values
 
-        self.profile = self.profile.drop_duplicates().sort_index(axis=1)
+        return df.drop_duplicates().sort_index(axis=1)
 
     def operate(self, kwargs=None):
         """

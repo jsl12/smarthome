@@ -48,23 +48,33 @@ class RGBFader(PandasCtl):
         return ['rgb_color']
 
     def populate(self):
-        self.place_vals(self.profile.index[0], 'initial')
-        self.place_vals(self.profile.index[-1], 'final')
+        self.place_vals(self.profile.index[0], self.args['initial'])
+        self.place_vals(self.profile.index[-1], self.args['final'])
 
-    def place_vals(self, idx, base_arg):
-        for entity, config in self.args[base_arg].items():
-            if 'color_name' in config:
-                vals = self.colors.loc[config['color_name']].values
-            elif self.val_kwarg in config:
-                vals = config[self.val_kwarg]
+    def place_vals(self, idx, config):
+        for entity, config in config.items():
+            if (color := config.get('color_name', False)):
+                vals = self.colors.loc[color].values
+            elif (color_vals := config.get('rgb_color', False)):
+                vals = color_vals
+
+            cols = ['red', 'green', 'blue']
+            df = self.blank_df([entity], cols)
 
             try:
-                self.profile.loc[idx, pd.IndexSlice[entity, self.cols]] = [float(v) for v in vals]
+                df.loc[idx, pd.IndexSlice[entity, cols]] = [float(v) for v in vals]
             except KeyError as e:
                 self.log(f'{entity} not in {self.profile.columns.get_level_values(level=0)}')
+            except ValueError as e:
+                self.log(f'ValueError: {e}\n{str(self.profile.loc[idx, pd.IndexSlice[entity, self.cols]])}\n{[float(v) for v in vals]}')
+            else:
+                df = self.interpolate(df)
+                df[idx, pd.IndexSlice[entity, 'rgb_color']] = df.apply(lambda row: row.to_list(), axis=1)
+                df = df.drop(cols, axis=1)
+                self.profile = df
 
-            if 'brightness_pct' in config:
-                self.profile.loc[idx, (entity, 'brightness_pct')] = config['brightness_pct']
+            if brightness := config.get('brightness_pct', False):
+                self.profile.loc[idx, (entity, 'brightness_pct')] = brightness
 
     def operate(self, kwargs=None):
         idx = self.prev_index
