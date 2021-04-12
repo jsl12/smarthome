@@ -85,5 +85,9 @@ views:
 
       - type: entities
         entities:
+          - entity: automation.bedside_auto_off
           - entity: automation.office_weekday_morning
           - entity: automation.office_weekday_morning_2
+          - entity: automation.leaving
+          - entity: automation.returning
+          - entity: automation.weekend_late_return

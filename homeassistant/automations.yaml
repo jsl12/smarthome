@@ -108,3 +108,76 @@
     entity_id: light.bedside_lamp
     domain: light
   mode: single
+- id: '1618247103050'
+  alias: Leaving
+  description: ''
+  trigger:
+  - platform: state
+    entity_id: person.john_lancaster
+    from: home
+    to: not_home
+  condition: []
+  action:
+  - service: scene.create
+    data:
+      scene_id: leaving
+      snapshot_entities:
+      - light.living_room
+      - switch.kitchen
+      - switch.big_lamp
+  - service: scene.apply
+    data:
+      entities:
+        light.living_room:
+          state: 'off'
+        switch.kitchen:
+          state: 'off'
+        switch.big_lamp:
+          state: 'off'
+  mode: single
+- id: '1618261459320'
+  alias: Returning
+  description: ''
+  trigger:
+  - platform: state
+    entity_id: person.john_lancaster
+    from: not_home
+    to: home
+  condition: []
+  action:
+  - service: scene.turn_on
+    target:
+      entity_id: scene.leaving
+  mode: single
+- id: '1618263152733'
+  alias: Weekend Late Return
+  description: ''
+  trigger:
+  - platform: time
+    at: '23:00'
+  condition:
+  - condition: time
+    weekday:
+    - thu
+    - fri
+    - sat
+  action:
+  - service: scene.create
+    data:
+      scene_id: leaving
+      entities:
+        light.living_room:
+          state: 'on'
+          color_name: steelblue
+          brightness_pct: 100
+        light.bedside_lamp:
+          state: 'on'
+          color_name: red
+          brightness_pct: 100
+        switch.kitchen_light:
+          state: 'on'
+        switch.dutch_grow_light:
+          state: 'off'
+        switch.big_lamp:
+          state: 'off'
+  mode: single
