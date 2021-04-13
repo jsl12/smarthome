@@ -1,0 +1,5 @@
+everyone:
+  name: Everyone
+  entities:
+    - person.john_lancaster
+    - person.elena
