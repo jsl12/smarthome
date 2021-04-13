@@ -18,11 +18,11 @@
       entities:
         light.office:
           state: 'on'
-          color_name: deeppink
+          color_name: coral
           brightness_pct: 40
         light.office_desk_light:
           state: 'on'
-          color_name: deeppink
+          color_name: coral
           brightness_pct: 100
         switch.kitchen_light:
           state: 'on'
@@ -171,8 +171,12 @@
       entities:
         light.living_room:
           state: 'on'
-          color_name: steelblue
-          brightness_pct: 100
+          color_name: darkorange
+          brightness_pct: 50
+        light.hallway_light:
+          state: 'on'
+          color_name: darkorange
+          brightness_pct: 1
         light.bedside_lamp:
           state: 'on'
           color_name: red
