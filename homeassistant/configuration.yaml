@@ -44,6 +44,10 @@ cloud:
           - living room pair
           - main lights
         room: living room
+      light.office:
+        name: Office Overhead
+        aliases:
+          - office overhead
 
 duckdns:
   domain: jslhomeassistant
