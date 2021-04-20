@@ -48,6 +48,13 @@ cloud:
         name: Office Overhead
         aliases:
           - office overhead
+      light.bedside_lamp:
+        name: Bedside Lamp
+        aliases:
+          - bedside lamp
+          - bedroom lamp
+          - bedroom light
+          - bedside light
 
 duckdns:
   domain: jslhomeassistant
