@@ -5,7 +5,19 @@ views:
   - path: default_view
     title: Home
     cards:
-
+      - type: vertical-stack
+        cards:
+          - type: glance
+            entities:
+              - entity: group.everyone
+              - entity: person.john_lancaster
+              - entity: person.elena
+          - type: history-graph
+            entities:
+              - entity: person.john_lancaster
+              - entity: person.elena
+            hours_to_show: 24
+            refresh_interval: 30
       - type: vertical-stack
         cards:
           - type: entities
