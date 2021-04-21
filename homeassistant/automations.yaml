@@ -125,6 +125,10 @@
       - light.living_room
       - switch.kitchen_light
       - switch.big_lamp
+      - light.bedside_lamp
+      - light.hallway_light
+      - light.office
+      - light.office_desk_light
   - service: scene.apply
     data:
       entities:
@@ -133,6 +137,14 @@
         switch.kitchen_light:
           state: 'off'
         switch.big_lamp:
+          state: 'off'
+        light.bedside_lamp:
+          state: 'off'
+        light.hallway_light:
+          state: 'off'
+        light.office:
+          state: 'off'
+        light.office_desk_light:
           state: 'off'
   mode: single
 - id: '1618261459320'
