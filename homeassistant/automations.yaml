@@ -32,7 +32,7 @@
   description: Gets Elena's office ready in the morning
   trigger:
   - platform: time
-    at: 08:14
+    at: 08:15
   condition:
   - condition: time
     weekday:
@@ -53,7 +53,7 @@
   description: ''
   trigger:
   - platform: time
-    at: 08:31
+    at: 08:30
   condition:
   - condition: time
     weekday:
@@ -87,6 +87,8 @@
   - service: scene.turn_on
     target:
       entity_id: scene.wind_down
+    data:
+      transition: 30
   mode: single
 - id: '1617855367959'
   alias: Bedside Auto Off
