@@ -3,7 +3,7 @@
   description: Makes it pink in the office in the morning
   trigger:
   - platform: time
-    at: 07:00
+    at: '07:00'
   condition:
   - condition: time
     weekday:
@@ -32,7 +32,7 @@
   description: Gets Elena's office ready in the morning
   trigger:
   - platform: time
-    at: 08:15
+    at: '08:15'
   condition:
   - condition: time
     weekday:
@@ -53,7 +53,7 @@
   description: ''
   trigger:
   - platform: time
-    at: 08:30
+    at: '08:30'
   condition:
   - condition: time
     weekday:
@@ -74,7 +74,7 @@
   description: ''
   trigger:
   - platform: time
-    at: '21:00:00'
+    at: '21:00'
   condition:
   - condition: time
     weekday:
@@ -95,7 +95,7 @@
   description: ''
   trigger:
   - platform: time
-    at: 02:00:00
+    at: '02:00'
   condition:
   - condition: time
     weekday:
@@ -244,7 +244,7 @@
   description: ''
   trigger:
   - platform: time
-    at: 09:30
+    at: '09:30'
   condition:
   - condition: time
     weekday:
@@ -261,7 +261,7 @@
   description: ''
   trigger:
   - platform: time
-    at: 12:00
+    at: '12:00'
   condition:
   - condition: time
     weekday:
@@ -282,7 +282,7 @@
   description: ''
   trigger:
   - platform: time
-    at: 08:00
+    at: '08:00'
   condition: []
   action:
   - type: turn_on
