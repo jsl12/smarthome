@@ -239,3 +239,75 @@
     target:
       entity_id: scene.elena_return
   mode: single
+- id: '1619037860061'
+  alias: Weekday Awake 1
+  description: ''
+  trigger:
+  - platform: time
+    at: 09:30
+  condition:
+  - condition: time
+    weekday:
+    - mon
+    - tue
+    - wed
+    - thu
+    - fri
+  action:
+  - scene: scene.weekday_awake_1
+  mode: single
+- id: '1619037917337'
+  alias: Weekday Awake 2
+  description: ''
+  trigger:
+  - platform: time
+    at: 12:00
+  condition:
+  - condition: time
+    weekday:
+    - mon
+    - tue
+    - wed
+    - thu
+    - fri
+  action:
+  - service: scene.turn_on
+    target:
+      entity_id: scene.weekday_awake_2
+    data:
+      transition: 30
+  mode: single
+- id: '1619184825513'
+  alias: Grow On
+  description: ''
+  trigger:
+  - platform: time
+    at: 08:00
+  condition: []
+  action:
+  - type: turn_on
+    device_id: b84a9840ce0c61651255a7a36003bfbe
+    entity_id: switch.dutch_grow_light
+    domain: switch
+  - type: turn_on
+    device_id: 6429373613100d6d3ff519a9246a8349
+    entity_id: switch.grow_cabinet
+    domain: switch
+  mode: single
+- id: '1619184870942'
+  alias: Grow Off
+  description: ''
+  trigger:
+  - platform: time
+    at: '20:00'
+  condition: []
+  action:
+  - type: turn_off
+    device_id: b84a9840ce0c61651255a7a36003bfbe
+    entity_id: switch.dutch_grow_light
+    domain: switch
+  - type: turn_off
+    device_id: 6429373613100d6d3ff519a9246a8349
+    entity_id: switch.grow_cabinet
+    domain: switch
+  mode: single
