@@ -77,6 +77,7 @@ views:
           - media_player.living_room_tv
           - media_player.nest_minis
           - media_player.office_speaker
+          - media_player.googlehome0584
         state_filter:
           - 'playing'
           - 'paused'
