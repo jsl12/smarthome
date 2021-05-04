@@ -12,6 +12,7 @@ views:
               - entity: group.everyone
               - entity: person.john_lancaster
               - entity: person.elena
+              - entity: binary_sensor.aqara_motion_1
           - type: history-graph
             entities:
               - entity: person.john_lancaster

@@ -86,6 +86,11 @@
       color_temp: 450
     switch.big_lamp:
       state: 'off'
+    light.office:
+      state: 'off'
+    switch.office_grow_light:
+      state: 'on'
+
 - id: '1616563763959'
   name: Elena Bed
   icon: mdi:bed-outline
