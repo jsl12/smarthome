@@ -3,7 +3,7 @@
   description: Makes it pink in the office in the morning
   trigger:
   - platform: time
-    at: '07:00'
+    at: 07:00
   condition:
   - condition: time
     weekday:
@@ -32,7 +32,7 @@
   description: Gets Elena's office ready in the morning
   trigger:
   - platform: time
-    at: '08:15'
+    at: 08:15
   condition:
   - condition: time
     weekday:
@@ -53,7 +53,7 @@
   description: ''
   trigger:
   - platform: time
-    at: '08:30'
+    at: 08:30
   condition:
   - condition: time
     weekday:
@@ -95,7 +95,7 @@
   description: ''
   trigger:
   - platform: time
-    at: '02:00'
+    at: 02:00
   condition:
   - condition: time
     weekday:
@@ -157,6 +157,11 @@
     entity_id: group.everyone
     from: not_home
     to: home
+  - type: opened
+    platform: device
+    device_id: 9e2536d1e2460fed13aa105c36d2ff24
+    entity_id: binary_sensor.front_door
+    domain: binary_sensor
   condition: []
   action:
   - service: scene.turn_on
@@ -244,7 +249,7 @@
   description: ''
   trigger:
   - platform: time
-    at: '09:30'
+    at: 09:30
   condition:
   - condition: time
     weekday:
@@ -282,7 +287,7 @@
   description: ''
   trigger:
   - platform: time
-    at: '08:00'
+    at: 08:00
   condition: []
   action:
   - type: turn_on
@@ -309,5 +314,77 @@
   - type: turn_off
     device_id: 6429373613100d6d3ff519a9246a8349
     entity_id: switch.grow_cabinet
+    domain: switch
+  mode: single
+- id: '1619500515734'
+  alias: Weekday Elena Bed
+  description: ''
+  trigger:
+  - platform: time
+    at: '22:30'
+  - platform: state
+    entity_id: binary_sensor.elena_phone_is_charging
+    from: 'off'
+    to: 'on'
+  condition:
+  - condition: time
+    weekday:
+    - mon
+    - tue
+    - wed
+    - thu
+    - fri
+    after: '21:00'
+  - condition: state
+    entity_id: light.living_room
+    state: 'on'
+  action:
+  - service: scene.turn_on
+    target:
+      entity_id: scene.elena_bed
+  mode: single
+- id: '1620068437298'
+  alias: Late Night Short
+  description: Turns the lights on temporarily late at night
+  trigger:
+  - type: motion
+    platform: device
+    device_id: 8bfd920c1d844c7f43fb3ba53afebf71
+    entity_id: binary_sensor.aqara_motion_1
+    domain: binary_sensor
+  condition:
+  - condition: state
+    entity_id: light.living_room
+    state: 'off'
+  - condition: time
+    after: '23:00'
+    before: 06:00
+  action:
+  - service: scene.apply
+    data:
+      entities:
+        light.living_room:
+          state: 'on'
+          color_name: red
+          brightness_pct: 10
+        light.hallway_light:
+          state: 'on'
+          color_name: red
+          brightness_pct: 10
+        switch.kitchen_light:
+          state: 'on'
+  - delay:
+      hours: 0
+      minutes: 1
+      seconds: 30
+      milliseconds: 0
+  - service: light.turn_off
+    target:
+      entity_id:
+      - light.living_room
+      - light.hallway_light
+  - type: turn_off
+    device_id: 292f607c78277c0aba18f855bf57c869
+    entity_id: switch.kitchen_light
     domain: switch
   mode: single

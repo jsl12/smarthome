@@ -16,7 +16,10 @@ views:
             entities:
               - entity: person.john_lancaster
               - entity: person.elena
-            hours_to_show: 24
+              - entity: binary_sensor.front_door
+              - entity: binary_sensor.aqara_motion_1
+                name: Motion
+            hours_to_show: 18
             refresh_interval: 30
       - type: vertical-stack
         cards:
@@ -45,6 +48,20 @@ views:
               - entity: light.hallway_light
               - entity: switch.kitchen_light
             state_color: true
+
+      - type: vertical-stack
+        cards:
+        - type: history-graph
+          entities:
+            - entity: switch.dutch_grow_light
+            - entity: switch.grow_cabinet
+          hours_to_show: 24
+          refresh_interval: 0
+          title: Grow Lights
+        - type: entities
+          entities:
+            - entity: switch.dutch_grow_light
+            - entity: switch.grow_cabinet
 
       - type: vertical-stack
         cards:
@@ -98,9 +115,18 @@ views:
 
       - type: entities
         entities:
-          - entity: automation.bedside_auto_off
+          - entity: automation.weekday_pink
           - entity: automation.office_weekday_morning
           - entity: automation.office_weekday_morning_2
+          - entity: automation.weekday_awake_1
+          - entity: automation.weekday_awake_2
+          - entity: automation.weekday_wind_down
+          - entity: automation.weekday_elena_bed
+          - entity: automation.bedside_auto_off
+          - entity: automation.late_night_short
           - entity: automation.leaving
           - entity: automation.returning
           - entity: automation.weekend_late_return
+          - entity: automation.elena_return
+          - entity: automation.grow_on
+          - entity: automation.grow_off
