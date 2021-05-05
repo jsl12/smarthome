@@ -68,6 +68,7 @@
       state: 'on'
       brightness_pct: 5
       color_temp: 500
+
 - id: '1616560862328'
   icon: mdi:trending-down
   name: Wind Down
@@ -75,21 +76,28 @@
     light.living_room:
       state: 'on'
       brightness_pct: 80
-      color_temp: 300
-    light.hallway_light:
-      state: 'on'
-      brightness_pct: 10
-      color_temp: 425
+      color_temp: 400
+    switch.big_lamp:
+      state: 'off'
     light.bedside_lamp:
       state: 'on'
       brightness_pct: 50
       color_temp: 450
-    switch.big_lamp:
-      state: 'off'
-    light.office:
-      state: 'off'
-    switch.office_grow_light:
+    light.hallway_light:
       state: 'on'
+      brightness_pct: 1
+      color_name: steelblue
+    light.office:
+#      state: 'off'
+      state: 'on'
+      color_name: deeppink
+      brightness_pct: 10
+    light.office_desk_light:
+      state: 'on'
+      color_temp: 500
+      brightness_pct: 75
+    switch.office_grow_light:
+      state: 'off'
 
 - id: '1616563763959'
   name: Elena Bed
@@ -99,18 +107,21 @@
       state: 'on'
       brightness_pct: 50
       color_temp: 400
+    switch.big_lamp:
+      state: 'off'
     light.bedside_lamp:
       state: 'on'
       brightness_pct: 20
       color_temp: 450
-    switch.big_lamp:
-      state: 'off'
     light.hallway_light:
       state: 'off'
     light.office:
       state: 'off'
     light.office_desk_light:
       state: 'off'
+    switch.office_grow_light:
+      state: 'off'
+
 - id: '1616564121181'
   name: John Bed
   icon: mdi:bed
