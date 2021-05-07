@@ -41,6 +41,7 @@ views:
             entities:
               - entity: light.office
               - entity: light.office_desk_light
+              - entity: switch.office_grow_light
             title: Office
             state_color: true
           - title: Other

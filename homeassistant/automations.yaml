@@ -3,7 +3,7 @@
   description: Makes it pink in the office in the morning
   trigger:
   - platform: time
-    at: 07:00
+    at: 08:00
   condition:
   - condition: time
     weekday:
@@ -32,7 +32,7 @@
   description: Gets Elena's office ready in the morning
   trigger:
   - platform: time
-    at: 08:15
+    at: 09:00
   condition:
   - condition: time
     weekday:
@@ -53,7 +53,7 @@
   description: ''
   trigger:
   - platform: time
-    at: 08:30
+    at: 09:30
   condition:
   - condition: time
     weekday:
@@ -74,7 +74,7 @@
   description: ''
   trigger:
   - platform: time
-    at: '21:00'
+    at: '19:00'
   condition:
   - condition: time
     weekday:
@@ -82,13 +82,18 @@
     - tue
     - wed
     - thu
+    - fri
+    - sat
     - sun
+  - condition: state
+    entity_id: group.everyone
+    state: home
   action:
   - service: scene.turn_on
     target:
       entity_id: scene.wind_down
     data:
-      transition: 30
+      transition: 60
   mode: single
 - id: '1617855367959'
   alias: Bedside Auto Off
@@ -339,7 +344,7 @@
   description: ''
   trigger:
   - platform: time
-    at: '22:30'
+    at: '21:30'
   - platform: state
     entity_id: binary_sensor.elena_phone_is_charging
     from: 'off'
@@ -377,6 +382,8 @@
   - condition: time
     after: '23:00'
     before: 06:00
+  - condition: template
+    value_template: '{{ state_attr(''sun.sun'', ''elevation'') < 0 }}'
   action:
   - service: scene.apply
     data:
@@ -391,19 +398,83 @@
           brightness_pct: 10
         switch.kitchen_light:
           state: 'on'
+      transition: 0
+  - delay:
+      hours: 0
+      minutes: 2
+      seconds: 0
+      milliseconds: 0
+  - service: light.turn_off
+    target:
+      entity_id:
+      - light.living_room
+      - light.hallway_light
+    data:
+      transition: 0
+  - type: turn_off
+    device_id: 292f607c78277c0aba18f855bf57c869
+    entity_id: switch.kitchen_light
+    domain: switch
+  mode: single
+- id: '1620100236063'
+  alias: Test Motion Detected
+  description: ''
+  trigger:
+  - type: motion
+    platform: device
+    device_id: 8bfd920c1d844c7f43fb3ba53afebf71
+    entity_id: binary_sensor.aqara_motion_1
+    domain: binary_sensor
+  condition: []
+  action:
+  - service: scene.create
+    data:
+      scene_id: test_motion
+      snapshot_entities:
+      - light.living_room
+  - service: scene.apply
+    data:
+      entities:
+        light.living_room:
+          state: 'on'
+          color_name: steelblue
   - wait_for_trigger:
     - type: no_motion
       platform: device
       device_id: 8bfd920c1d844c7f43fb3ba53afebf71
       entity_id: binary_sensor.aqara_motion_1
       domain: binary_sensor
-  - service: light.turn_off
+    continue_on_timeout: true
+  - service: scene.turn_on
+    target:
+      entity_id: scene.test_motion
+  mode: single
+- id: '1620180333704'
+  alias: Auto Tracker Update
+  description: ''
+  trigger:
+  - type: opened
+    platform: device
+    device_id: 9e2536d1e2460fed13aa105c36d2ff24
+    entity_id: binary_sensor.front_door
+    domain: binary_sensor
+  condition: []
+  action:
+  - choose:
+    - conditions:
+      - condition: state
+        entity_id: group.everyone
+        state: home
+      sequence:
+      - delay:
+          hours: 0
+          minutes: 3
+          seconds: 0
+          milliseconds: 0
+    default: []
+  - service: homeassistant.update_entity
     target:
       entity_id:
-      - light.living_room
-      - light.hallway_light
-  - type: turn_off
-    device_id: 292f607c78277c0aba18f855bf57c869
-    entity_id: switch.kitchen_light
-    domain: switch
+      - device_tracker.elena_phone
+      - device_tracker.pixel_5
   mode: single
