@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
 from typing import List
 
@@ -12,16 +12,8 @@ import helpers
 class IndexShifter(hass.Hass):
     def initialize(self):
         assert 'start' in self.args
-
         self.log(f'Starting at {self.args["start"]} {self.start_datetime.time()}')
-
-        if self.args['start'].lower().startswith('sunrise'):
-            self.timer_start = self.run_at_sunrise(callback=self.start, offset=self.start_offset)
-        elif self.args['start'].lower().startswith('sunset'):
-            self.timer_start = self.run_at_sunset(callback=self.start, offset=self.start_offset)
-        else:
-            self.timer_start = self.run_daily(callback=self.start, start=self.start_datetime.time())
-
+        self.timer_start = self.run_daily(callback=self.start, start=self.args['start'])
         if self.active:
             self.start()
 
@@ -29,36 +21,17 @@ class IndexShifter(hass.Hass):
         self.idx = self.index()
         self.operate({'idx': self.closest_index()})
 
-    def operate(self, kwargs):
-        idx = kwargs['idx']
-        self.log(f'Operating: {idx}')
+    def operate(self, kwargs = None):
         try:
-            closest_next: datetime = self.idx.to_pydatetime()[self.idx.get_loc(idx) + 1]
+            closest_next: datetime = self.idx.to_pydatetime()[self.idx.get_loc(kwargs['idx']) + 1]
         except IndexError as e:
             self.log(f'Ending')
         else:
             self.run_at(callback=self.operate, start=closest_next.strftime('%H:%M:%S'), idx=closest_next)
-            self.log(f'Next run: {closest_next.time()}')
 
     def terminate(self):
         if hasattr(self, 'timer_start'):
             self.cancel_timer(self.timer_start)
-
-    @property
-    def start_offset(self) -> int:
-        try:
-            sun, sign, offset = self.args['start'].split()
-        except:
-            return
-        else:
-            hours, minutes, seconds = map(int, offset.split(':'))
-            offset = int(timedelta(hours=hours, minutes=minutes, seconds=seconds).total_seconds())
-            if sign == '+':
-                return offset
-            elif sign == '-':
-                return -offset
-            else:
-                raise ValueError(f'Invalid sign: {sign}')
 
     @property
     def start_datetime(self) -> datetime:
@@ -87,7 +60,43 @@ class IndexShifter(hass.Hass):
         ).sort_values().index.to_series()[0].to_pydatetime()
 
 
-class PandasCtl(hass.Hass):
+class SunriseLight(IndexShifter):
+    def initialize(self):
+        super(SunriseLight, self).initialize()
+        assert 'entity_id' in self.args
+
+    def start(self, kwargs=None):
+        self.profile = pd.DataFrame(columns=['color_temp', 'brightness_pct'],
+                                    index=self.index())
+        self.profile.iloc[[0, -1]] = [[200, 1], [350, 50]]
+        self.profile = (
+            self
+            .profile
+            .applymap(float)
+            .interpolate('time', axis='index')
+            .applymap(round)
+            .applymap(int)
+            .drop_duplicates()
+            .sort_index(axis=1)
+        )
+        self.idx = self.profile.index
+        super(SunriseLight, self).start(kwargs)
+
+    @property
+    def entity(self):
+        return self.args['entity_id']
+
+    def operate(self, kwargs = None):
+        attributes = self.profile.loc[kwargs['idx']].to_dict()
+        if self.get_state(self.entity) == 'on':
+            self.turn_on(self.entity, **attributes)
+            self.log(f"{self.entity}: {attributes}")
+        else:
+            self.log(f'{self.entity} is off')
+        super(SunriseLight, self).operate(kwargs)
+
+
+class PandasCtl(IndexShifter):
     """
     Args:
         start:
@@ -112,37 +121,8 @@ class PandasCtl(hass.Hass):
     def entities(self) -> List[str]:
         raise NotImplementedError
 
-    @property
-    def start_datetime(self) -> datetime:
-        return datetime.combine(self.date(), self.parse_time(self.args['start'])).astimezone()
-
-    @property
-    def current_datetime(self) -> datetime:
-        return self.datetime().astimezone()
-
-    @property
-    def end_datetime(self) -> datetime:
-        return datetime.combine(self.date(), self.parse_time(self.args['end'])).astimezone()
-
-    @property
-    def active(self):
-        return self.start_datetime <= self.current_datetime <= self.end_datetime
-
-    @property
-    def prev_index(self):
-        idx = self.next_index
-        return 0 if idx <= 0 else idx
-
-    @property
-    def next_index(self):
-        try:
-            return (self.profile.index <= self.current_datetime).sum()
-        except AttributeError:
-            self.generate_profile()
-            return 0
-
     def initialize(self):
-        self.validate_args()
+        super(PandasCtl, self).initialize()
 
         self.colors = colors.get_colors(self.COLOR_YAML)
 
@@ -155,13 +135,6 @@ class PandasCtl(hass.Hass):
             self.log(f'Already supposed to be active, starting. Last action: {last_action_time}')
             self.operate()
 
-    def validate_args(self):
-        required = ['start', 'end', 'initial', 'final']
-        for r in required:
-            assert r in self.args
-
-        assert self.start_datetime < self.end_datetime, f'{self.start_datetime:19} is not before {self.end_datetime:19}'
-
     def generate_profile(self):
         """
         Handles generating the operation profile which is a `pd.DataFrame` object
@@ -172,7 +145,7 @@ class PandasCtl(hass.Hass):
         """
         self.profile = helpers.scene_df(
             start=self.start_datetime,
-            end=self.end_datetime,
+            end=self.stop_datetime,
             freq='1min',
             entities=self.entities,
             config_dir=helpers.HOMEASSISTANT_CONFIG_DIR
