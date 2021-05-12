@@ -1,11 +1,90 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import List
 
+import pandas as pd
 from appdaemon.plugins.hass import hassapi as hass
 
 import colors
 import helpers
+
+
+class IndexShifter(hass.Hass):
+    def initialize(self):
+        assert 'start' in self.args
+
+        self.log(f'Starting at {self.args["start"]} {self.start_datetime.time()}')
+
+        if self.args['start'].lower().startswith('sunrise'):
+            self.timer_start = self.run_at_sunrise(callback=self.start, offset=self.start_offset)
+        elif self.args['start'].lower().startswith('sunset'):
+            self.timer_start = self.run_at_sunset(callback=self.start, offset=self.start_offset)
+        else:
+            self.timer_start = self.run_daily(callback=self.start, start=self.start_datetime.time())
+
+        if self.active:
+            self.start()
+
+    def start(self, kwargs = None):
+        self.idx = self.index()
+        self.operate({'idx': self.closest_index()})
+
+    def operate(self, kwargs):
+        idx = kwargs['idx']
+        self.log(f'Operating: {idx}')
+        try:
+            closest_next: datetime = self.idx.to_pydatetime()[self.idx.get_loc(idx) + 1]
+        except IndexError as e:
+            self.log(f'Ending')
+        else:
+            self.run_at(callback=self.operate, start=closest_next.strftime('%H:%M:%S'), idx=closest_next)
+            self.log(f'Next run: {closest_next.time()}')
+
+    def terminate(self):
+        if hasattr(self, 'timer_start'):
+            self.cancel_timer(self.timer_start)
+
+    @property
+    def start_offset(self) -> int:
+        try:
+            sun, sign, offset = self.args['start'].split()
+        except:
+            return
+        else:
+            hours, minutes, seconds = map(int, offset.split(':'))
+            offset = int(timedelta(hours=hours, minutes=minutes, seconds=seconds).total_seconds())
+            if sign == '+':
+                return offset
+            elif sign == '-':
+                return -offset
+            else:
+                raise ValueError(f'Invalid sign: {sign}')
+
+    @property
+    def start_datetime(self) -> datetime:
+        return datetime.combine(self.date(), self.parse_time(self.args['start'])).astimezone()
+
+    @property
+    def stop_datetime(self) -> datetime:
+        return datetime.combine(self.date(), self.parse_time(self.args['stop'])).astimezone()
+
+    @property
+    def current_datetime(self) -> datetime:
+        return self.datetime().astimezone()
+
+    @property
+    def active(self) -> bool:
+        return self.start_datetime <= self.current_datetime <= self.stop_datetime
+
+    def index(self) -> pd.Index:
+        return pd.date_range(start=self.start_datetime,
+                             end=self.stop_datetime,
+                             freq=self.args.get('freq', '1 min')).round('S')
+
+    def closest_index(self) -> datetime:
+        return (self.idx.to_series() - self.current_datetime).apply(
+            lambda td: abs(td.total_seconds())
+        ).sort_values().index.to_series()[0].to_pydatetime()
 
 
 class PandasCtl(hass.Hass):
