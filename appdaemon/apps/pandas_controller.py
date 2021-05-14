@@ -23,11 +23,11 @@ class IndexShifter(hass.Hass):
 
     def operate(self, kwargs = None):
         try:
-            closest_next: datetime = self.idx.to_pydatetime()[self.idx.get_loc(kwargs['idx']) + 1]
+            next_operation: datetime = self.idx.to_pydatetime()[self.idx.get_loc(kwargs['idx']) + 1]
         except IndexError as e:
             self.log(f'Ending')
         else:
-            self.run_at(callback=self.operate, start=closest_next.strftime('%H:%M:%S'), idx=closest_next)
+            self.run_at(callback=self.operate, start=next_operation.strftime('%H:%M:%S'), idx=next_operation)
 
     def terminate(self):
         if hasattr(self, 'timer_start'):
@@ -80,6 +80,7 @@ class SunriseLight(IndexShifter):
             .sort_index(axis=1)
         )
         self.idx = self.profile.index
+        self.turn_on(self.entity)
         super(SunriseLight, self).start(kwargs)
 
     @property
