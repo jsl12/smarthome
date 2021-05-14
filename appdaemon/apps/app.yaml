@@ -2,7 +2,7 @@ dutch_grow_light:
   module: growlight
   class: GrowLight
   entity_id: switch.dutch_grow_light
-  start: 'sunrise - 01:00:00'
+  start: 'sunrise'
   duration: '12:00:00'
 #  end: 'sunset + 00:30:00'
 
@@ -12,6 +12,14 @@ grow_cabinet:
   entity_id: switch.grow_cabinet
   start: '09:00:00'
   end: '22:00:00'
+
+sunrise:
+  module: pandas_controller
+  class: SunriseLight
+  start: 'sunrise + 01:00:00'
+  stop: 'sunrise + 02:00:00'
+  freq: 1 min
+  entity_id: light.bedside_lamp
 
 #morning_fader_1:
 #  module: fader
