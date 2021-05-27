@@ -33,6 +33,7 @@ cloud:
       include_domains:
         - switch
         - light
+        - scene
       exclude_entities:
         - light.office_overhead_1
         - light.office_overhead_2
