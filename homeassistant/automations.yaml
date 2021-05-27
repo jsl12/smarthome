@@ -73,8 +73,10 @@
   alias: Weekday Wind Down
   description: ''
   trigger:
-  - platform: time
-    at: '19:00'
+  - platform: numeric_state
+    entity_id: sun.sun
+    attribute: elevation
+    below: '-6'
   condition:
   - condition: time
     weekday:
@@ -280,7 +282,7 @@
     - type: motion
       platform: device
       device_id: 8bfd920c1d844c7f43fb3ba53afebf71
-      entity_id: binary_sensor.aqara_motion_1
+      entity_id: binary_sensor.motion_sensor_1
       domain: binary_sensor
   - scene: scene.weekday_awake_1
   mode: single
@@ -373,7 +375,7 @@
   - type: motion
     platform: device
     device_id: 8bfd920c1d844c7f43fb3ba53afebf71
-    entity_id: binary_sensor.aqara_motion_1
+    entity_id: binary_sensor.motion_sensor_1
     domain: binary_sensor
   condition:
   - condition: state
@@ -423,7 +425,7 @@
   - type: motion
     platform: device
     device_id: 8bfd920c1d844c7f43fb3ba53afebf71
-    entity_id: binary_sensor.aqara_motion_1
+    entity_id: binary_sensor.motion_sensor_1
     domain: binary_sensor
   condition: []
   action:
@@ -442,7 +444,7 @@
     - type: no_motion
       platform: device
       device_id: 8bfd920c1d844c7f43fb3ba53afebf71
-      entity_id: binary_sensor.aqara_motion_1
+      entity_id: binary_sensor.motion_sensor_1
       domain: binary_sensor
     continue_on_timeout: true
   - service: scene.turn_on

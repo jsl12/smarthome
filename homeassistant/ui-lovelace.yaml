@@ -12,14 +12,16 @@ views:
               - entity: group.everyone
               - entity: person.john_lancaster
               - entity: person.elena
-              - entity: binary_sensor.aqara_motion_1
+              - entity: binary_sensor.motion_sensor_1
           - type: history-graph
             entities:
               - entity: person.john_lancaster
               - entity: person.elena
               - entity: binary_sensor.front_door
-              - entity: binary_sensor.aqara_motion_1
-                name: Motion
+              - entity: binary_sensor.motion_sensor_1
+                name: Living Room
+              - entity: binary_sensor.motion_sensor_2
+                name: Bedroom
             hours_to_show: 18
             refresh_interval: 30
       - type: vertical-stack
