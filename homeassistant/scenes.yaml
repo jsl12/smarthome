@@ -68,7 +68,6 @@
       state: 'on'
       brightness_pct: 5
       color_temp: 500
-
 - id: '1616560862328'
   icon: mdi:trending-down
   name: Wind Down
@@ -88,7 +87,6 @@
       brightness_pct: 1
       color_name: steelblue
     light.office:
-#      state: 'off'
       state: 'on'
       color_name: deeppink
       brightness_pct: 10
@@ -98,7 +96,6 @@
       brightness_pct: 75
     switch.office_grow_light:
       state: 'off'
-
 - id: '1616563763959'
   name: Elena Bed
   icon: mdi:bed-outline
@@ -121,7 +118,6 @@
       state: 'off'
     switch.office_grow_light:
       state: 'off'
-
 - id: '1616564121181'
   name: John Bed
   icon: mdi:bed
@@ -142,3 +138,18 @@
       state: 'off'
     switch.kitchen_light:
       state: 'off'
+- id: '1621282548046'
+  name: Rain
+  entities:
+    light.hallway_light:
+      state: 'on'
+      color_name: dodgerblue
+      brightness_pct: 100
+    light.living_room:
+      state: 'on'
+      color_name: cornflowerblue
+      brightness_pct: 100
+    light.bedside_lamp:
+      state: 'on'
+      color_name: mediumblue
+      brightness_pct: 100
