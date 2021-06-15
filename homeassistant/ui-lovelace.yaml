@@ -22,6 +22,8 @@ views:
                 name: Living Room
               - entity: binary_sensor.motion_sensor_2
                 name: Bedroom
+              - entity: binary_sensor.motion_sensor_3
+                name: Office
             hours_to_show: 18
             refresh_interval: 30
       - type: vertical-stack
@@ -74,16 +76,9 @@ views:
             secondary_info_attribute: humidity
           - type: history-graph
             entities:
-              - entity: sun.sun
               - entity: weather.the_lola
             hours_to_show: 24
             refresh_interval: 0
-            title: Sun Location
-          - type: entities
-            entities:
-              - entity: sun.sun
-                secondary_info: last-updated
-            state_color: true
           - type: entity
             entity: sun.sun
             attribute: elevation
@@ -117,20 +112,18 @@ views:
           - entity: scene.elena_bed
           - entity: scene.john_bed
 
-      - type: entities
+  - path: temps
+    title: Temps
+    cards:
+      - type: history-graph
+        title: 'Graph'
         entities:
-          - entity: automation.weekday_pink
-          - entity: automation.office_weekday_morning
-          - entity: automation.office_weekday_morning_2
-          - entity: automation.weekday_awake_1
-          - entity: automation.weekday_awake_2
-          - entity: automation.weekday_wind_down
-          - entity: automation.weekday_elena_bed
-          - entity: automation.bedside_auto_off
-          - entity: automation.late_night_short
-          - entity: automation.leaving
-          - entity: automation.returning
-          - entity: automation.weekend_late_return
-          - entity: automation.elena_return
-          - entity: automation.grow_on
-          - entity: automation.grow_off
+          - sensor.bedroom_sensor
+          - sensor.outside_sensor
+          - sensor.cabinet_sensor
+          - sensor.bedroom_sensor_2
+          - sensor.outside_sensor_2
+          - sensor.cabinet_sensor_2
+          - sensor.bedroom_sensor_3
+          - sensor.outside_sensor_3
+          - sensor.cabinet_sensor_3

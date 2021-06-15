@@ -3,7 +3,7 @@
   description: Makes it pink in the office in the morning
   trigger:
   - platform: time
-    at: 08:00
+    at: 07:30
   condition:
   - condition: time
     weekday:
@@ -26,6 +26,29 @@
           brightness_pct: 100
         switch.kitchen_light:
           state: 'on'
+        switch.office_grow_light:
+          state: 'off'
+  - wait_for_trigger:
+    - device_id: aecfeae510316cff63a6cc6fa68ff1bd
+      domain: deconz
+      platform: device
+      type: remote_button_short_press
+      subtype: turn_on
+    timeout: 01:00:00
+  - service: scene.turn_on
+    target:
+      entity_id: scene.office_weekday_1
+    data: {}
+  - wait_for_trigger:
+    - device_id: aecfeae510316cff63a6cc6fa68ff1bd
+      domain: deconz
+      platform: device
+      type: remote_button_short_press
+      subtype: turn_on
+    timeout: 00:30:00
+  - service: scene.turn_on
+    target:
+      entity_id: scene.office_weekday_2
   mode: single
 - id: '1616566126519'
   alias: Office Weekday Morning
@@ -41,12 +64,25 @@
     - wed
     - thu
     - fri
+  - condition: or
+    conditions:
+    - condition: device
+      type: is_on
+      device_id: faa23b8679912cea5254870e0935d30f
+      entity_id: light.office_desk_light
+      domain: light
+    - condition: device
+      type: is_on
+      device_id: f28614685ae41e3be292805bd4493855
+      entity_id: switch.office_grow_light
+      domain: switch
+    - condition: device
+      type: is_on
+      device_id: 55212266b5370671a1223f5d86c32067
+      entity_id: light.office
+      domain: light
   action:
-  - service: scene.turn_on
-    target:
-      entity_id: scene.office_weekday_1
-    data:
-      transition: 30
+  - scene: scene.office_weekday_2
   mode: single
 - id: '1617158632641'
   alias: Office Weekday Morning 2
@@ -90,6 +126,16 @@
   - condition: state
     entity_id: group.everyone
     state: home
+  - type: is_no_motion
+    condition: device
+    device_id: b723dd7c8e0cf08743bd091aae21c1a9
+    entity_id: binary_sensor.motion_sensor_3
+    domain: binary_sensor
+    for:
+      hours: 0
+      minutes: 20
+      seconds: 0
+      milliseconds: 0
   action:
   - service: scene.turn_on
     target:
@@ -101,16 +147,22 @@
   alias: Bedside Auto Off
   description: ''
   trigger:
-  - platform: time
-    at: 02:00
+  - type: no_motion
+    platform: device
+    device_id: 8a0cd8c6ffbc960f6da9197bf0400f4b
+    entity_id: binary_sensor.motion_sensor_2
+    domain: binary_sensor
+    for:
+      hours: 0
+      minutes: 20
+      seconds: 0
+      milliseconds: 0
   condition:
-  - condition: time
-    weekday:
-    - mon
-    - tue
-    - wed
-    - thu
-    - fri
+  - condition: device
+    type: is_on
+    device_id: 6091d1dd4716f090db1ed154f2614e5b
+    entity_id: light.bedside_lamp
+    domain: light
   action:
   - type: turn_off
     device_id: 6091d1dd4716f090db1ed154f2614e5b
@@ -136,9 +188,6 @@
       - switch.big_lamp
       - light.bedside_lamp
       - light.hallway_light
-      - light.office
-      - light.office_desk_light
-      - switch.office_grow_light
   - service: scene.apply
     data:
       entities:
@@ -151,12 +200,6 @@
         light.bedside_lamp:
           state: 'off'
         light.hallway_light:
-          state: 'off'
-        light.office:
-          state: 'off'
-        light.office_desk_light:
-          state: 'off'
-        switch.office_grow_light:
           state: 'off'
   - wait_for_trigger:
     - type: opened
@@ -268,7 +311,7 @@
   description: ''
   trigger:
   - platform: time
-    at: 08:00
+    at: '10:00'
   condition:
   - condition: time
     weekday:
@@ -277,13 +320,12 @@
     - wed
     - thu
     - fri
+  - condition: device
+    type: is_on
+    device_id: e19a924a2bd6ba3b04507c1e80e76a16
+    entity_id: light.living_room
+    domain: light
   action:
-  - wait_for_trigger:
-    - type: motion
-      platform: device
-      device_id: 8bfd920c1d844c7f43fb3ba53afebf71
-      entity_id: binary_sensor.motion_sensor_1
-      domain: binary_sensor
   - scene: scene.weekday_awake_1
   mode: single
 - id: '1619037917337'
@@ -300,12 +342,13 @@
     - wed
     - thu
     - fri
+  - condition: device
+    type: is_on
+    device_id: e19a924a2bd6ba3b04507c1e80e76a16
+    entity_id: light.living_room
+    domain: light
   action:
-  - service: scene.turn_on
-    target:
-      entity_id: scene.weekday_awake_2
-    data:
-      transition: 30
+  - scene: scene.weekday_awake_2
   mode: single
 - id: '1619184825513'
   alias: Grow On
@@ -346,11 +389,7 @@
   description: ''
   trigger:
   - platform: time
-    at: '21:30'
-  - platform: state
-    entity_id: binary_sensor.elena_phone_is_charging
-    from: 'off'
-    to: 'on'
+    at: '20:30'
   condition:
   - condition: time
     weekday:
@@ -359,11 +398,26 @@
     - wed
     - thu
     - fri
-    after: '21:00'
   - condition: state
     entity_id: light.living_room
     state: 'on'
   action:
+  - wait_for_trigger:
+    - type: no_motion
+      platform: device
+      device_id: b723dd7c8e0cf08743bd091aae21c1a9
+      entity_id: binary_sensor.motion_sensor_3
+      domain: binary_sensor
+      for:
+        hours: 0
+        minutes: 15
+        seconds: 0
+        milliseconds: 0
+    - device_id: aecfeae510316cff63a6cc6fa68ff1bd
+      domain: deconz
+      platform: device
+      type: remote_button_short_press
+      subtype: turn_on
   - service: scene.turn_on
     target:
       entity_id: scene.elena_bed
@@ -479,4 +533,241 @@
       entity_id:
       - device_tracker.elena_phone
       - device_tracker.pixel_5
+  mode: single
+- id: '1620710056967'
+  alias: Weekday Off
+  description: ''
+  trigger:
+  - platform: time
+    at: '21:30'
+  condition: []
+  action:
+  - wait_for_trigger:
+    - device_id: e83999bf18f5ed4c0a22766589cf9ebb
+      domain: deconz
+      platform: device
+      type: remote_button_short_press
+      subtype: turn_on
+  - scene: scene.john_bed
+  mode: single
+- id: '1622069063059'
+  alias: Desk Switch Toggle
+  description: ''
+  trigger:
+  - device_id: e83999bf18f5ed4c0a22766589cf9ebb
+    domain: deconz
+    platform: device
+    type: remote_button_short_press
+    subtype: turn_on
+  condition: []
+  action:
+  - type: toggle
+    device_id: e19a924a2bd6ba3b04507c1e80e76a16
+    entity_id: light.living_room
+    domain: light
+  mode: single
+- id: '1622084390458'
+  alias: Bedroom Switch Single Press
+  description: ''
+  trigger:
+  - device_id: b37c16eb4ca40658e53024e9241fa5ff
+    domain: deconz
+    platform: device
+    type: remote_button_short_press
+    subtype: turn_on
+  condition: []
+  action:
+  - type: toggle
+    device_id: 6091d1dd4716f090db1ed154f2614e5b
+    entity_id: light.bedside_lamp
+    domain: light
+  mode: single
+- id: '1623540859301'
+  alias: Office Auto
+  description: ''
+  trigger:
+  - type: no_motion
+    platform: device
+    device_id: b723dd7c8e0cf08743bd091aae21c1a9
+    entity_id: binary_sensor.motion_sensor_3
+    domain: binary_sensor
+    for:
+      hours: 0
+      minutes: 20
+      seconds: 0
+      milliseconds: 0
+  - device_id: aecfeae510316cff63a6cc6fa68ff1bd
+    domain: deconz
+    platform: device
+    type: remote_button_short_press
+    subtype: turn_on
+  condition:
+  - condition: or
+    conditions:
+    - condition: device
+      type: is_on
+      device_id: faa23b8679912cea5254870e0935d30f
+      entity_id: light.office_desk_light
+      domain: light
+    - condition: device
+      type: is_on
+      device_id: f28614685ae41e3be292805bd4493855
+      entity_id: switch.office_grow_light
+      domain: switch
+    - condition: device
+      type: is_on
+      device_id: 55212266b5370671a1223f5d86c32067
+      entity_id: light.office
+      domain: light
+  action:
+  - service: scene.create
+    data:
+      scene_id: office_auto
+      snapshot_entities:
+      - light.office
+      - light.office_desk_light
+      - switch.office_grow_light
+  - service: scene.apply
+    data:
+      entities:
+        light.office:
+          state: 'off'
+        light.office_desk_light:
+          state: 'off'
+        switch.office_grow_light:
+          state: 'off'
+  - wait_for_trigger:
+    - type: motion
+      platform: device
+      device_id: b723dd7c8e0cf08743bd091aae21c1a9
+      entity_id: binary_sensor.motion_sensor_3
+      domain: binary_sensor
+    - device_id: aecfeae510316cff63a6cc6fa68ff1bd
+      domain: deconz
+      platform: device
+      type: remote_button_short_press
+      subtype: turn_on
+  - choose:
+    - conditions:
+      - condition: time
+        before: 09:00
+        weekday:
+        - mon
+        - tue
+        - wed
+        - thu
+        - fri
+      sequence:
+      - service: scene.turn_on
+        target:
+          entity_id: scene.office_weekday_1
+    - conditions:
+      - condition: time
+        before: '16:00'
+        weekday:
+        - mon
+        - tue
+        - wed
+        - thu
+        - fri
+      sequence:
+      - service: scene.turn_on
+        target:
+          entity_id: scene.office_weekday_2
+    default:
+    - service: scene.turn_on
+      target:
+        entity_id: scene.office_auto
+  mode: single
+- id: '1623732730740'
+  alias: Bedroom Switch - Double Press
+  description: ''
+  trigger:
+  - device_id: b37c16eb4ca40658e53024e9241fa5ff
+    domain: deconz
+    platform: device
+    type: remote_button_double_press
+    subtype: turn_on
+  condition: []
+  action:
+  - choose:
+    - conditions:
+      - condition: numeric_state
+        entity_id: sun.sun
+        attribute: elevation
+        below: '0'
+      sequence:
+      - choose:
+        - conditions:
+          - condition: numeric_state
+            entity_id: light.bedside_lamp
+            attribute: brightness
+            above: '127'
+          sequence:
+          - service: scene.apply
+            data:
+              entities:
+                light.bedside_lamp:
+                  state: 'on'
+                  color_temp: 450
+                  brightness: 126
+        - conditions:
+          - condition: numeric_state
+            entity_id: light.bedside_lamp
+            attribute: brightness
+            below: '25'
+          sequence:
+          - service: scene.apply
+            data:
+              entities:
+                light.bedside_lamp:
+                  state: 'on'
+                  color_temp: 450
+                  brightness: 126
+        default:
+        - service: scene.apply
+          data:
+            entities:
+              light.bedside_lamp:
+                state: 'on'
+                color_name: red
+                brightness_pct: 5
+    default: []
+  mode: single
+- id: '1623777982523'
+  alias: Living Room Auto
+  description: ''
+  trigger:
+  - platform: numeric_state
+    entity_id: sun.sun
+    attribute: elevation
+    above: '6'
+  condition:
+  - condition: time
+    weekday:
+    - mon
+    - tue
+    - wed
+    - thu
+    - fri
+  action:
+  - wait_for_trigger:
+    - type: motion
+      platform: device
+      device_id: 8bfd920c1d844c7f43fb3ba53afebf71
+      entity_id: binary_sensor.motion_sensor_1
+      domain: binary_sensor
+  - choose:
+    - conditions:
+      - condition: time
+        before: '10:00'
+      sequence:
+      - scene: scene.weekday_early
+    - conditions:
+      - condition: time
+        before: '12:00'
+      sequence:
+      - scene: scene.weekday_awake_1
+    default:
+    - scene: scene.weekday_awake_2
   mode: single
