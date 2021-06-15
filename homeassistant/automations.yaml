@@ -738,36 +738,105 @@
   alias: Living Room Auto
   description: ''
   trigger:
-  - platform: numeric_state
-    entity_id: sun.sun
-    attribute: elevation
-    above: '6'
+  - type: motion
+    platform: device
+    device_id: 8bfd920c1d844c7f43fb3ba53afebf71
+    entity_id: binary_sensor.motion_sensor_1
+    domain: binary_sensor
+  - device_id: e83999bf18f5ed4c0a22766589cf9ebb
+    domain: deconz
+    platform: device
+    type: remote_button_short_press
+    subtype: turn_on
+  - type: opened
+    platform: device
+    device_id: 9e2536d1e2460fed13aa105c36d2ff24
+    entity_id: binary_sensor.front_door
+    domain: binary_sensor
   condition:
-  - condition: time
-    weekday:
-    - mon
-    - tue
-    - wed
-    - thu
-    - fri
+  - condition: device
+    type: is_off
+    device_id: e19a924a2bd6ba3b04507c1e80e76a16
+    entity_id: light.living_room
+    domain: light
   action:
-  - wait_for_trigger:
-    - type: motion
-      platform: device
-      device_id: 8bfd920c1d844c7f43fb3ba53afebf71
-      entity_id: binary_sensor.motion_sensor_1
-      domain: binary_sensor
   - choose:
     - conditions:
-      - condition: time
-        before: '10:00'
+      - condition: numeric_state
+        entity_id: sun.sun
+        attribute: elevation
+        above: '6'
       sequence:
-      - scene: scene.weekday_early
-    - conditions:
-      - condition: time
-        before: '12:00'
-      sequence:
-      - scene: scene.weekday_awake_1
+      - choose:
+        - conditions:
+          - condition: time
+            before: '10:00'
+            weekday:
+            - mon
+            - tue
+            - wed
+            - thu
+            - fri
+          sequence:
+          - scene: scene.weekday_early
+        - conditions:
+          - condition: time
+            before: '12:00'
+            weekday:
+            - mon
+            - tue
+            - wed
+            - thu
+            - fri
+          sequence:
+          - scene: scene.weekday_awake_1
+        - conditions:
+          - condition: time
+            weekday:
+            - sat
+            - sun
+          sequence:
+          - scene: scene.weekday_awake_1
+        default:
+        - scene: scene.weekday_awake_2
     default:
-    - scene: scene.weekday_awake_2
+    - choose:
+      - conditions:
+        - condition: time
+          before: '23:00'
+        sequence:
+        - scene: scene.wind_down
+      default:
+      - service: scene.apply
+        data:
+          entities:
+            light.living_room:
+              state: 'on'
+              color_name: red
+              brightness_pct: 30
+  mode: single
+- id: '1623799900830'
+  alias: Living Room Auto Off
+  description: ''
+  trigger:
+  - type: no_motion
+    platform: device
+    device_id: 8bfd920c1d844c7f43fb3ba53afebf71
+    entity_id: binary_sensor.motion_sensor_1
+    domain: binary_sensor
+    for:
+      hours: 0
+      minutes: 20
+      seconds: 0
+      milliseconds: 0
+  condition: []
+  action:
+  - type: turn_off
+    device_id: e19a924a2bd6ba3b04507c1e80e76a16
+    entity_id: light.living_room
+    domain: light
+  - type: turn_off
+    device_id: b0e896160a9c371588a3bcc02e429524
+    entity_id: switch.big_lamp
+    domain: switch
   mode: single
