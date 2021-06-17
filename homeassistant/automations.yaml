@@ -843,6 +843,16 @@
                   state: 'on'
                   color_name: red
                   brightness_pct: 30
+          - wait_for_trigger:
+            - type: no_motion
+              platform: device
+              device_id: 8a0cd8c6ffbc960f6da9197bf0400f4b
+              entity_id: binary_sensor.motion_sensor_2
+              domain: binary_sensor
+          - type: turn_off
+            device_id: e19a924a2bd6ba3b04507c1e80e76a16
+            entity_id: light.living_room
+            domain: light
     default: []
   mode: single
 - id: '1623799900830'
