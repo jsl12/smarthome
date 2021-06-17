@@ -2,16 +2,14 @@
   name: Weekday Wakeup
   icon: mdi:weather-sunset
   entities:
-    light.bedside_lamp:
-      state: 'on'
-      brightness_pct: 1
-      color_temp: 650
     light.living_room:
       state: 'on'
-      brightness_pct: 10
+      brightness_pct: 25
       color_temp: 200
     switch.kitchen_light:
       state: 'on'
+    switch.big_lamp:
+      state: 'off'
 - id: '1617144026198'
   name: Weekday Awake 1
   icon: mdi:network-strength-1
@@ -82,10 +80,6 @@
       color_temp: 400
     switch.big_lamp:
       state: 'off'
-#    light.bedside_lamp:
-#      state: 'on'
-#      brightness_pct: 50
-#      color_temp: 450
     light.hallway_light:
       state: 'on'
       brightness_pct: 1
@@ -137,6 +131,3 @@
       state: 'on'
       color_name: mediumblue
       brightness_pct: 100
-- id: '1623778012015'
-  name: Weekday Early
-  entities: {}
