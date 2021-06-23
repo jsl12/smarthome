@@ -55,9 +55,14 @@ class IndexShifter(hass.Hass):
                              freq=self.args.get('freq', '1 min')).round('S')
 
     def closest_index(self) -> datetime:
-        return (self.idx.to_series() - self.current_datetime).apply(
-            lambda td: abs(td.total_seconds())
-        ).sort_values().index.to_series()[0].to_pydatetime()
+        return (
+            (self.idx.to_series() - self.current_datetime)
+                .apply(lambda td: abs(td.total_seconds()))
+                .sort_values()
+                .index
+                .to_series()[0]
+                .to_pydatetime()
+        )
 
 
 class SunriseLight(IndexShifter):
@@ -137,13 +142,6 @@ class PandasCtl(IndexShifter):
             self.operate()
 
     def generate_profile(self):
-        """
-        Handles generating the operation profile which is a `pd.DataFrame` object
-
-        Returns
-        -------
-
-        """
         self.profile = helpers.scene_df(
             start=self.start_datetime,
             end=self.stop_datetime,
@@ -175,18 +173,6 @@ class PandasCtl(IndexShifter):
         raise NotImplementedError
 
     def operate(self, kwargs=None):
-        """
-        Only handles scheduling the next operation. All other logic needs to happen in the overridden
-        method.
-
-        Parameters
-        ----------
-        kwargs :
-
-        Returns
-        -------
-
-        """
         try:
             next_operation_time = self.profile.index[self.next_index].time().isoformat()[:8]
         except IndexError as e:
@@ -203,3 +189,4 @@ class PandasCtl(IndexShifter):
     def terminate(self):
         if hasattr(self, 'start_time'):
             self.cancel_timer(self.start_timer)
+            del self.start_timer

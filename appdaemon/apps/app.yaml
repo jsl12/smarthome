@@ -17,7 +17,7 @@ sunrise:
   module: pandas_controller
   class: SunriseLight
   start: 'sunrise + 01:00:00'
-  stop: 'sunrise + 02:00:00'
+  stop: '08:30:00'
   freq: 1 min
   entity_id: light.bedside_lamp
 
