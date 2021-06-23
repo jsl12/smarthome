@@ -98,6 +98,23 @@
     - wed
     - thu
     - fri
+  - condition: or
+    conditions:
+    - condition: device
+      type: is_on
+      device_id: faa23b8679912cea5254870e0935d30f
+      entity_id: light.office_desk_light
+      domain: light
+    - condition: device
+      type: is_on
+      device_id: f28614685ae41e3be292805bd4493855
+      entity_id: switch.office_grow_light
+      domain: switch
+    - condition: device
+      type: is_on
+      device_id: 55212266b5370671a1223f5d86c32067
+      entity_id: light.office
+      domain: light
   action:
   - service: scene.turn_on
     target:
