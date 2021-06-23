@@ -210,6 +210,23 @@ views:
               - entity: scene.office_weekday_2
               - entity: scene.office_gaming
       - type: vertical-stack
+        title: Bedroom
+        cards:
+          - type: history-graph
+            entities:
+              - entity: binary_sensor.motion_sensor_2
+                name: Motion
+              - entity: light.bedside_lamp
+                name: Lamp
+            hours_to_show: 10
+            refresh_interval: 0
+          - type: entities
+            entities:
+              - entity: binary_sensor.motion_sensor_2
+                name: Motion
+              - entity: light.bedside_lamp
+                name: Lamp
+      - type: vertical-stack
         title: Grow Lights
         cards:
           - type: history-graph
