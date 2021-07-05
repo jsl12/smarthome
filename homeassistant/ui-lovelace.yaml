@@ -212,8 +212,19 @@ views:
       - type: vertical-stack
         title: Bedroom
         cards:
+          - type: vertical-stack
+            title: Sleep
+            hours_to_show: 10
+            refresh_interval: 0
+            cards:
+              - type: history-graph
+                entities:
+                  - entity: input_boolean.sleeping
+                    name: Sleep
           - type: history-graph
             entities:
+              - entity: input_boolean.sleeping
+                name: Sleep
               - entity: binary_sensor.motion_sensor_2
                 name: Motion
               - entity: light.bedside_lamp

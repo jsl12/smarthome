@@ -735,93 +735,119 @@
   action:
   - choose:
     - conditions:
-      - condition: time
-        weekday:
-        - mon
-        - tue
-        - wed
-        - thu
-        - fri
+      - condition: state
+        entity_id: input_boolean.sleeping
+        state: 'off'
       sequence:
       - choose:
         - conditions:
           - condition: time
-            before: 09:00
-            after: 06:00
+            weekday:
+            - mon
+            - tue
+            - wed
+            - thu
+            - fri
           sequence:
-          - scene: scene.weekday_wakeup
-        - conditions:
-          - condition: time
-            before: '12:00'
-          sequence:
-          - scene: scene.weekday_awake_1
-        - conditions:
-          - condition: time
-            after: '12:00'
-          - condition: numeric_state
-            entity_id: sun.sun
-            attribute: elevation
-            above: '20'
-          sequence:
-          - scene: scene.weekday_awake_2
-        - conditions:
-          - condition: time
-            before: '22:00'
-          sequence:
-          - scene: scene.wind_down
-        - conditions:
-          - condition: time
-            after: '22:00'
-          sequence:
-          - scene: scene.elena_bed
-        - conditions:
-          - condition: numeric_state
-            entity_id: sun.sun
-            attribute: elevation
-            below: '6'
-          - condition: device
-            type: is_off
-            device_id: 6091d1dd4716f090db1ed154f2614e5b
-            entity_id: light.bedside_lamp
-            domain: light
-          sequence:
-          - service: scene.apply
-            data:
-              entities:
-                light.living_room:
-                  state: 'on'
-                  color_name: red
-                  brightness_pct: 40
-          - wait_for_trigger:
-            - type: no_motion
-              platform: device
-              device_id: 8bfd920c1d844c7f43fb3ba53afebf71
-              entity_id: binary_sensor.motion_sensor_1
-              domain: binary_sensor
-          - type: turn_off
-            device_id: e19a924a2bd6ba3b04507c1e80e76a16
-            entity_id: light.living_room
-            domain: light
-        default: []
+          - choose:
+            - conditions:
+              - condition: time
+                before: 09:00
+                after: 06:00
+              sequence:
+              - scene: scene.weekday_wakeup
+            - conditions:
+              - condition: time
+                before: '12:00'
+              sequence:
+              - scene: scene.weekday_awake_1
+            - conditions:
+              - condition: time
+                after: '12:00'
+              - condition: numeric_state
+                entity_id: sun.sun
+                attribute: elevation
+                above: '20'
+              sequence:
+              - scene: scene.weekday_awake_2
+            - conditions:
+              - condition: time
+                before: '22:00'
+              sequence:
+              - scene: scene.wind_down
+            - conditions:
+              - condition: time
+                after: '22:00'
+              sequence:
+              - scene: scene.elena_bed
+            default: []
+        default:
+        - choose:
+          - conditions:
+            - condition: time
+              after: 06:00
+            sequence:
+            - choose:
+              - conditions:
+                - condition: numeric_state
+                  entity_id: sun.sun
+                  attribute: elevation
+                  below: '20'
+                sequence:
+                - scene: scene.wind_down
+              default:
+              - type: toggle
+                device_id: e19a924a2bd6ba3b04507c1e80e76a16
+                entity_id: light.living_room
+                domain: light
+          default: []
     default:
     - choose:
       - conditions:
-        - condition: time
-          after: 06:00
+        - condition: or
+          conditions:
+          - condition: time
+            weekday:
+            - mon
+            - tue
+            - wed
+            - thu
+            - fri
+            after: 07:30
+          - condition: time
+            weekday:
+            - sat
+            - sun
+            after: 09:30
         sequence:
-        - choose:
-          - conditions:
-            - condition: numeric_state
-              entity_id: sun.sun
-              attribute: elevation
-              below: '20'
-            sequence:
-            - scene: scene.wind_down
-          default:
-          - type: toggle
-            device_id: e19a924a2bd6ba3b04507c1e80e76a16
-            entity_id: light.living_room
-            domain: light
+        - service: input_boolean.turn_off
+          target:
+            entity_id: input_boolean.sleeping
+      default: []
+    - choose:
+      - conditions:
+        - condition: numeric_state
+          entity_id: sun.sun
+          attribute: elevation
+          below: '6'
+        sequence:
+        - service: scene.apply
+          data:
+            entities:
+              light.living_room:
+                state: 'on'
+                color_name: red
+                brightness_pct: 40
+        - wait_for_trigger:
+          - type: no_motion
+            platform: device
+            device_id: 8bfd920c1d844c7f43fb3ba53afebf71
+            entity_id: binary_sensor.motion_sensor_1
+            domain: binary_sensor
+        - type: turn_off
+          device_id: e19a924a2bd6ba3b04507c1e80e76a16
+          entity_id: light.living_room
+          domain: light
       default: []
   mode: single
 - id: '1623799900830'
